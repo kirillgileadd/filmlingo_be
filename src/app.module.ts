@@ -18,6 +18,7 @@ import { join } from 'path';
 import { SubtitleModule } from './subtitle/subtitle.module';
 import { YouTubeModule } from './youtube/youtube.module';
 import { TranslateModule } from './translate/translate.module';
+import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module';
 
 @Module({
   controllers: [],
@@ -40,6 +41,7 @@ import { TranslateModule } from './translate/translate.module';
       port: Number(process.env.POSTGRES_PORT),
       password: process.env.POSTGRES_PASSWORD,
     }),
+    YandexIamTokenModule,
     TranslateModule,
     YouTubeModule,
     AuthModule,
