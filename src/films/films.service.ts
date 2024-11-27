@@ -27,7 +27,6 @@ export class FilmService {
     filename: string,
     subtitleFiles: SubtitleDto[],
   ): Promise<Film> {
-    console.log(123);
     const posterPath = await this.fileService.savePoster(
       posterBuffer,
       filename,
@@ -43,8 +42,6 @@ export class FilmService {
       filename,
       'titleImage',
     );
-
-    console.log(posterPath, 'posterPath');
 
     // Сохраняем видео и получаем пути к M3U8
     const m3u8Paths = await this.fileService.processAndSaveVideo(
@@ -74,7 +71,6 @@ export class FilmService {
 
     await this.videoVariantModel.bulkCreate(videoVariants); // Сохраняем все варианты сразу
 
-    console.log(subtitleFiles, 'subtitleFiles');
     // Сохраняем субтитры
     const subtitleRecords = await Promise.all(
       subtitleFiles.map(async (dto) => {
@@ -89,8 +85,6 @@ export class FilmService {
         };
       }),
     );
-
-    console.log(subtitleRecords, 'subtitleRecords');
 
     // Создаем записи о субтитрах
     await this.subtitleModel.bulkCreate(subtitleRecords); // Сохраняем все субтитры сразу

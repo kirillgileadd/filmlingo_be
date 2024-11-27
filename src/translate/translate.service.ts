@@ -29,7 +29,6 @@ export class TranslateService {
       const response = await firstValueFrom(
         this.httpService.post(url, data, { headers }),
       );
-      console.log(response.data);
 
       return response.data.translations[0].text; // Извлекаем переведенный текст
     } catch (error) {

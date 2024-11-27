@@ -3,11 +3,11 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('users', 'username', {
-      type: Sequelize.STRING,
-      allowNull: true,
-      unique: false,
-    });
+    // await queryInterface.addColumn('users', 'username', {
+    //   type: Sequelize.STRING,
+    //   allowNull: true,
+    //   unique: false,
+    // });
   },
 
   async down(queryInterface, Sequelize) {

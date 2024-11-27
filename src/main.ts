@@ -1,10 +1,9 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe } from './pipes/validation.pipe';
 import { join } from 'path';
+import { AppModule } from './app.module';
 
 async function start() {
   const PORT = process.env.PORT || 8000;
@@ -22,6 +21,14 @@ async function start() {
     .setTitle('egfilm Backend')
     .setDescription('egfilm REST API docs')
     .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT', // Убедитесь, что указали формат JWT
+      },
+      'JWT', // Это имя схемы для авторизации
+    )
     .addTag('Gilead')
     .build();
 
@@ -29,6 +36,13 @@ async function start() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('/api/docs', app, document);
+
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .get('/api-json', (req, res) => {
+      res.json(document);
+    });
 
   app.useGlobalGuards();
 

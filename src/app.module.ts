@@ -19,6 +19,9 @@ import { SubtitleModule } from './subtitle/subtitle.module';
 import { YouTubeModule } from './youtube/youtube.module';
 import { TranslateModule } from './translate/translate.module';
 import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module';
+import { WordsModule } from './words/words.module';
+import { Word } from './words/word.model';
+import { UserWords } from './words/user-words.model';
 
 @Module({
   controllers: [],
@@ -32,7 +35,7 @@ import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module
       serveRoot: '/uploads/',
     }),
     SequelizeModule.forRoot({
-      models: [Role, UserRoles, Token, User],
+      models: [Role, UserRoles, Token, User, Word, UserWords],
       dialect: 'postgres',
       autoLoadModels: true,
       host: process.env.POSTGRES_HOST,
@@ -41,6 +44,7 @@ import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module
       port: Number(process.env.POSTGRES_PORT),
       password: process.env.POSTGRES_PASSWORD,
     }),
+    WordsModule,
     YandexIamTokenModule,
     TranslateModule,
     YouTubeModule,
@@ -53,6 +57,7 @@ import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module
     FileModule,
     FilmsModule,
     SubtitleModule,
+    WordsModule,
   ],
 })
 export class AppModule {

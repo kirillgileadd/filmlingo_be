@@ -63,7 +63,7 @@ export class AuthService {
 
   async findOrCreateUser(userDto: UpdateUserDto) {
     const user = await this.userService.getUsersByEmail(userDto.email);
-    console.log(user);
+
     if (user) {
       const updatedFields: Partial<User> = {};
 

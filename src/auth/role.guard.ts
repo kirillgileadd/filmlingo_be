@@ -36,7 +36,6 @@ export class RolesGuard implements CanActivate {
       const bearer = authHeader?.split(' ')?.[0];
 
       const token = authHeader?.split(' ')?.[1];
-      console.log(bearer, token);
 
       if (bearer !== 'Bearer' || !token) {
         throw new UnauthorizedException({
@@ -46,14 +45,12 @@ export class RolesGuard implements CanActivate {
 
       const user = this.tokenService.validateAccessToken(token);
 
-      console.log(user, 'iasidfas');
-
       if (!user) {
         throw new UnauthorizedException({
           message: 'Пользователь не авторизован',
         });
       }
-      console.log(user);
+
       req.user = user;
       return user.roles.some((role) => requiredRoles.includes(role.value));
     } catch (e) {

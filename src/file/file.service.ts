@@ -52,10 +52,8 @@ export class FileService {
     filename: string,
     type: 'poster' | 'bigPoster' | 'titleImage',
   ): Promise<string> {
-    console.log(filename, 'filename');
     // Получаем расширение файла из имени
     const extension = path.extname(filename).toLowerCase();
-    console.log(extension);
     // Проверяем поддерживаемые форматы
     const supportedFormats = ['.jpg', '.jpeg', '.webp', '.webm', '.png'];
     if (!supportedFormats.includes(extension)) {
@@ -104,7 +102,7 @@ export class FileService {
       fs.mkdirSync(subtitlesDir, { recursive: true });
     }
 
-    const subtitlePath = path.join(subtitlesDir, normalizedFilename, '.srt'); // Имя файла оригинальное
+    const subtitlePath = path.join(subtitlesDir, `${normalizedFilename}.srt`); // Имя файла оригинальное
 
     // Сохраняем файл субтитров
     fs.writeFileSync(subtitlePath, buffer); // Предполагаем, что file.buffer содержит содержимое файла
@@ -149,7 +147,7 @@ export class FileService {
       }
 
       // Команда ffmpeg с кавычками для путей
-      const command = `ffmpeg -i "${videoPath}" -b:v ${bitrate} -hls_time 10 -hls_list_size 0 -f hls "${m3u8Path}"`;
+      const command = `ffmpeg -i "${videoPath}" -b:v ${bitrate} -hls_time 20 -hls_list_size 0 -f hls "${m3u8Path}"`;
 
       try {
         await execAsync(command);

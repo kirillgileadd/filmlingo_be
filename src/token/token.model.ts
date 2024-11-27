@@ -20,7 +20,7 @@ export class Token extends Model<Token> {
   })
   id: number;
 
-  @Column({ type: DataType.STRING(500) })
+  @Column({ type: DataType.STRING(1000) })
   refreshToken: string;
 
   @ForeignKey(() => User)

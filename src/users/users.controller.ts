@@ -42,7 +42,6 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Get('/profile')
   getUser(@Request() req) {
-    console.log(req, 'user in req');
     return this.userService.getCurrentUser(req.user.id);
   }
 

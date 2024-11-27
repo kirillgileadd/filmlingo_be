@@ -116,7 +116,6 @@ export class AuthController {
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() req, @Res() res: Response) {
     const user = req.user;
-    console.log(user.roles, 'roles');
     const userData = await this.authService.setTokens({
       email: user.email,
       id: user.id,

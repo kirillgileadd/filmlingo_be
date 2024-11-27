@@ -29,7 +29,6 @@ export class TokenService {
 
   async saveToken(userId: number, refreshToken: string) {
     const tokenData = await this.tokenRepository.findOne({ where: { userId } });
-    console.log('save-tok123', tokenData);
 
     if (tokenData) {
       const updatedToken = await tokenData.update({ refreshToken });
@@ -39,8 +38,6 @@ export class TokenService {
       userId: userId,
       refreshToken,
     });
-
-    console.log('save tok');
 
     return token;
   }

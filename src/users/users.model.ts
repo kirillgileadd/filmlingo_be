@@ -2,7 +2,6 @@ import {
   BelongsToMany,
   Column,
   DataType,
-  HasMany,
   HasOne,
   Model,
   Table,
@@ -11,6 +10,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../roles/roles.model';
 import { UserRoles } from '../roles/user-roles.model';
 import { Token } from '../token/token.model';
+import { UserWords } from 'src/words/user-words.model';
+import { Word } from 'src/words/word.model';
 
 interface UserCreationAttrs {
   email: string;
@@ -103,4 +104,7 @@ export class User extends Model<User, UserCreationAttrs> {
 
   @HasOne(() => Token)
   token: Token;
+
+  @BelongsToMany(() => Word, () => UserWords)
+  words: Word[];
 }

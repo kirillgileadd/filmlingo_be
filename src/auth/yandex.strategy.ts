@@ -32,10 +32,10 @@ export class YandexStrategy extends PassportStrategy(Strategy, 'yandex') {
     _accessToken: string,
     _refreshToken: string,
     profile: YandexProfile,
+    // eslint-disable-next-line @typescript-eslint/ban-types
     done: Function,
   ) {
-    console.log(profile, 'profile');
-    const { id, displayName, emails, photos } = profile;
+    const { displayName, emails, photos } = profile;
 
     const user = await this.authService.findOrCreateUser({
       username: displayName,

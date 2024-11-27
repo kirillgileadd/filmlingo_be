@@ -149,7 +149,6 @@ export class YoutubeTranscript {
     }
     const transcriptBody = await transcriptResponse.text();
     const results = [...transcriptBody.matchAll(RE_XML_TRANSCRIPT)];
-    console.log(results, 'results');
 
     return results.map((result) => ({
       text: result[3],

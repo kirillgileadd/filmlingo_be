@@ -32,7 +32,6 @@ export class JwtAuthGuard implements CanActivate {
           message: 'Пользователь не авторизован',
         });
       }
-      console.log(user, 'user in jwt strategy');
       req.user = user;
       return true;
     } catch (e) {

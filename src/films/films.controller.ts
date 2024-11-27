@@ -103,8 +103,6 @@ export class FilmController {
     },
     @Body() createFilmDto: CreateFilmDto,
   ) {
-    console.log(createFilmDto.subtitles);
-    console.log(files.subtitlesFiles);
     const videoBuffer = files.video[0].buffer;
     const posterBuffer = files.poster[0].buffer;
     const bigPosterBuffer = files.big_poster[0].buffer;
