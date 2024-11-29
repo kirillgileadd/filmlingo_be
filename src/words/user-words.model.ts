@@ -9,7 +9,7 @@ import {
 import { Word } from './word.model';
 import { User } from '../users/users.model';
 
-@Table({ tableName: 'user_words', createdAt: false, updatedAt: false })
+@Table({ tableName: 'user_words', createdAt: true, updatedAt: true })
 export class UserWords extends Model<UserWords> {
   @Column({
     type: DataType.INTEGER,

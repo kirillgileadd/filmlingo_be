@@ -20,7 +20,7 @@ export class WordsService {
 
     const baseWords = await this.userWordModel.findAndCountAll({
       where: { userId: userId },
-      attributes: ['id', 'phrase'],
+      attributes: ['id', 'phrase', 'createdAt'],
       include: [
         {
           model: this.wordModel,
