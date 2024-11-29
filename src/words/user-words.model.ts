@@ -1,4 +1,5 @@
 import {
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -24,11 +25,17 @@ export class UserWords extends Model<UserWords> {
   })
   wordId: number;
 
+  @BelongsTo(() => Word)
+  word: Word;
+
   @ForeignKey(() => User)
   @Column({
     type: DataType.INTEGER,
   })
   userId: number;
+
+  @BelongsTo(() => User)
+  user: User;
 
   @Column({
     type: DataType.STRING,

@@ -14,30 +14,36 @@ export class WordsService {
     @InjectModel(User) private readonly userModel: typeof User,
   ) {}
 
-  async findUsersWords(userId: number) {
-    const user = await this.userModel.findOne({
-      where: { id: userId },
+  async findUsersWords(userId: number, page: number, pageSize: number) {
+    const offset = (page - 1) * pageSize;
+    const limit = pageSize;
+
+    const baseWords = await this.userWordModel.findAndCountAll({
+      where: { userId: userId },
+      attributes: ['id', 'phrase'],
       include: [
         {
           model: this.wordModel,
-          attributes: ['id', 'original', 'translation'],
-          through: {
-            attributes: ['phrase'],
-          },
         },
       ],
+      offset,
+      limit,
     });
 
-    const words = user?.words.map((word) => ({
-      id: word.id,
-      original: word.original,
-      translation: word.translation,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
-      phrase: word.UserWords?.phrase,
+    const words = baseWords.rows.map((userWord) => ({
+      id: userWord.id,
+      original: userWord.word.original,
+      translation: userWord.word.translation,
+      creationAt: userWord.createdAt,
+      phrase: userWord.phrase,
     }));
 
-    return words;
+    return {
+      rows: words,
+      totalCount: baseWords.count,
+      currentPage: page,
+      totalPages: Math.ceil(baseWords.count / pageSize),
+    };
   }
 
   async addWord(userId: number, createWordDto: CreateWordDto) {

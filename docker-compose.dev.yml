@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  minio:
+    image: minio/minio
+    container_name: minio
+    ports:
+      - '9000:9000' # API порт
+      - '9001:9001' # Web UI порт
+    environment:
+      MINIO_ROOT_USER: minioadmin # Логин
+      MINIO_ROOT_PASSWORD: minioadmin # Пароль
+      MINIO_REGION: us-east-1 # Настройка региона
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio-data:/data # Локальная папка для хранения данных MinIO
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - '5432:5432' # PostgreSQL порт
+    environment:
+      POSTGRES_USER: postgres # Логин
+      POSTGRES_PASSWORD: admin # Пароль
+      POSTGRES_DB: filmlingo # Имя базы данных
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data # Локальная папка для хранения данных PostgreSQL
+
+volumes:
+  minio-data: # Том для MinIO (если не хотите использовать локальную папку)
+  postgres-data: # Том для PostgreSQL (если не хотите использовать локальную папку)

@@ -2,6 +2,11 @@
 /dist
 /node_modules
 /config/config.json
+/uploads
+/minio-data
+/postgres-data
+/seeders
+/temp
 
 .development.env
 .production.env

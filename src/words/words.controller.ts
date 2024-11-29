@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -65,9 +66,17 @@ export class WordsController {
   @Roles('USER')
   @UseGuards(RolesGuard)
   @Get('/my-words')
-  async getUserWords(@Req() req) {
+  async getUserWords(
+    @Req() req,
+    @Query('page') page: string,
+    @Query('pageSize') pageSize: string,
+  ) {
     const userId = req.user.id;
-    return this.wordsService.findUsersWords(userId);
+
+    const pageNumber = parseInt(page, 10) || 1;
+    const size = parseInt(pageSize, 10) || 10;
+
+    return this.wordsService.findUsersWords(userId, pageNumber, size);
   }
 
   @ApiOperation({ summary: 'Получить одно слово по ID' })

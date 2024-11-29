@@ -25,21 +25,27 @@ export class FilmService {
     bigPosterBuffer: Buffer,
     titleImageBuffer: Buffer,
     filename: string,
+    posterExtension: string,
+    bigPosterExtension: string,
+    titleImageExtension: string,
     subtitleFiles: SubtitleDto[],
   ): Promise<Film> {
     const posterPath = await this.fileService.savePoster(
       posterBuffer,
       filename,
+      posterExtension,
       'poster',
     );
     const bigPosterPath = await this.fileService.savePoster(
       bigPosterBuffer,
       filename,
+      bigPosterExtension,
       'bigPoster',
     );
     const titleImagePath = await this.fileService.savePoster(
       titleImageBuffer,
       filename,
+      titleImageExtension,
       'titleImage',
     );
 
@@ -74,12 +80,13 @@ export class FilmService {
     // Сохраняем субтитры
     const subtitleRecords = await Promise.all(
       subtitleFiles.map(async (dto) => {
-        const subtitlePath = this.fileService.saveSubtitle(
+        const subtitlePath = await this.fileService.saveSubtitle(
           dto.buffer,
           filename,
-        ); // Сохраняем субтитр и получаем путь
+        );
+
         return {
-          path: subtitlePath,
+          path: subtitlePath, // Теперь это строка
           language: dto.lang, // Пример, как определить язык
           filmId: film.id, // Связываем субтитры с фильмом
         };

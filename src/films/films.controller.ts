@@ -21,6 +21,7 @@ import {
 import { FilmService } from './films.service';
 import { CreateFilmDto } from './dto/create-film.dto';
 import { Film } from './films.model';
+import { extname } from 'path';
 
 @ApiTags('Films')
 @Controller('films')
@@ -106,8 +107,19 @@ export class FilmController {
     const videoBuffer = files.video[0].buffer;
     const posterBuffer = files.poster[0].buffer;
     const bigPosterBuffer = files.big_poster[0].buffer;
+
     const titleImageBuffer = files.title_image[0].buffer;
+
     const filename = files.video[0].originalname;
+
+    const posterExtension = extname(files.poster[0].originalname).toLowerCase();
+    const bigPosterExtension = extname(
+      files.big_poster[0].originalname,
+    ).toLowerCase();
+    const titleImageExtension = extname(
+      files.title_image[0].originalname,
+    ).toLowerCase();
+    console.log(posterExtension, bigPosterExtension, titleImageExtension);
 
     if (files.subtitlesFiles && createFilmDto.subtitles) {
       // Преобразуем массив файлов в нужный формат
@@ -132,6 +144,9 @@ export class FilmController {
       bigPosterBuffer,
       titleImageBuffer,
       filename,
+      posterExtension,
+      bigPosterExtension,
+      titleImageExtension,
       createFilmDto.subtitles,
     );
   }
