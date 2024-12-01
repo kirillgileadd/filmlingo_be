@@ -70,13 +70,21 @@ export class WordsController {
     @Req() req,
     @Query('page') page: string,
     @Query('pageSize') pageSize: string,
+    @Query('order') order?: string,
+    @Query('orderValue') orderValue?: string,
   ) {
     const userId = req.user.id;
 
     const pageNumber = parseInt(page, 10) || 1;
     const size = parseInt(pageSize, 10) || 10;
 
-    return this.wordsService.findUsersWords(userId, pageNumber, size);
+    return this.wordsService.findUsersWords(
+      userId,
+      pageNumber,
+      size,
+      order,
+      orderValue,
+    );
   }
 
   @ApiOperation({ summary: 'Получить одно слово по ID' })

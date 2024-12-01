@@ -14,7 +14,13 @@ export class WordsService {
     @InjectModel(User) private readonly userModel: typeof User,
   ) {}
 
-  async findUsersWords(userId: number, page: number, pageSize: number) {
+  async findUsersWords(
+    userId: number,
+    page: number,
+    pageSize: number,
+    order?: string,
+    orderValue?: string,
+  ) {
     const offset = (page - 1) * pageSize;
     const limit = pageSize;
 
@@ -28,6 +34,7 @@ export class WordsService {
       ],
       offset,
       limit,
+      order: [[orderValue, order?.toUpperCase()]],
     });
 
     const words = baseWords.rows.map((userWord) => ({

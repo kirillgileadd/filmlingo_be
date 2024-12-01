@@ -1,15 +1,30 @@
-import { Column, ForeignKey, Model, Table } from 'sequelize-typescript';
+import {
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { Film } from '../films/films.model'; // импортируйте вашу модель Film
 
-@Table
+@Table({ tableName: 'subtitles' })
 export class Subtitle extends Model<Subtitle> {
-  @Column
-  path: string; // Путь к файлу субтитров
-
   @Column
   language: string; // Язык субтитров
 
   @ForeignKey(() => Film)
   @Column
   filmId: number; // Внешний ключ для связи с фильмом
+
+  @Column({ type: DataType.STRING, allowNull: false })
+  startTime: string;
+
+  @Column({ type: DataType.STRING, allowNull: false })
+  endTime: string;
+
+  @Column({ type: DataType.TEXT, allowNull: false })
+  text: string;
+
+  @Column({ type: DataType.ARRAY(DataType.STRING), allowNull: true })
+  phrases: string[];
 }

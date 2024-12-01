@@ -4,10 +4,10 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import * as ffmpeg from 'fluent-ffmpeg';
-import * as fs from 'fs';
+import ffmpeg from 'fluent-ffmpeg';
+import fs from 'fs';
 import { diskStorage } from 'multer';
-import * as path from 'path';
+import path from 'path';
 import { extname } from 'path';
 import { normalizeFilename } from 'src/uitils/normalizeFilename';
 import { v4 as uuidv4 } from 'uuid';

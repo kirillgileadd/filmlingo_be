@@ -1,10 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Subtitle } from 'src/subtitle/subtitle.model';
 import { FileService } from '../file/file.service';
 import { CreateFilmDto, SubtitleDto } from './dto/create-film.dto';
 import { Film } from './films.model';
 import { VideoVariant } from './video-variant.model';
+import { SubtitleService } from 'src/subtitle/subtitle.service';
+import { Sequelize } from 'sequelize';
 
 @Injectable()
 export class FilmService {
@@ -15,7 +21,9 @@ export class FilmService {
     private readonly subtitleModel: typeof Subtitle,
     @InjectModel(VideoVariant)
     private readonly videoVariantModel: typeof VideoVariant,
+    private readonly subtitleServie: SubtitleService,
     private readonly fileService: FileService,
+    @Inject('Sequelize') private readonly sequelize: Sequelize,
   ) {}
 
   async createFilm(
@@ -30,73 +38,83 @@ export class FilmService {
     titleImageExtension: string,
     subtitleFiles: SubtitleDto[],
   ): Promise<Film> {
-    const posterPath = await this.fileService.savePoster(
-      posterBuffer,
-      filename,
-      posterExtension,
-      'poster',
-    );
-    const bigPosterPath = await this.fileService.savePoster(
-      bigPosterBuffer,
-      filename,
-      bigPosterExtension,
-      'bigPoster',
-    );
-    const titleImagePath = await this.fileService.savePoster(
-      titleImageBuffer,
-      filename,
-      titleImageExtension,
-      'titleImage',
-    );
+    const transaction = await this.sequelize.transaction();
 
-    // Сохраняем видео и получаем пути к M3U8
-    const m3u8Paths = await this.fileService.processAndSaveVideo(
-      videoBuffer,
-      filename,
-    );
+    try {
+      const posterPath = await this.fileService.savePoster(
+        posterBuffer,
+        filename,
+        posterExtension,
+        'poster',
+      );
+      const bigPosterPath = await this.fileService.savePoster(
+        bigPosterBuffer,
+        filename,
+        bigPosterExtension,
+        'bigPoster',
+      );
+      const titleImagePath = await this.fileService.savePoster(
+        titleImageBuffer,
+        filename,
+        titleImageExtension,
+        'titleImage',
+      );
 
-    // Создаем запись о фильме в базе данных
-    const film = await this.filmModel.create({
-      posterPath: posterPath,
-      bigPosterPath: bigPosterPath,
-      titleImagePath: titleImagePath,
-      title: createFilmDto.title,
-      description: createFilmDto.description,
-      imdb_rating: createFilmDto.imdb_rating,
-      kinopoisk_rating: createFilmDto.kinopoisk_rating,
-      year: createFilmDto.year,
-      category: createFilmDto.category,
-    });
+      // Сохраняем видео и получаем пути к M3U8
+      const m3u8Paths = await this.fileService.processAndSaveVideo(
+        videoBuffer,
+        filename,
+      );
 
-    // Сохраняем пути к видео в отдельной таблице
-    const videoVariants = m3u8Paths.map((path, index) => ({
-      filmId: film.id,
-      resolution: ['1080p', '720p', '480p'][index], // Или используйте ваш собственный массив разрешений
-      videoPath: path,
-    }));
+      // Создаем запись о фильме в базе данных
+      const film = await this.filmModel.create(
+        {
+          posterPath: posterPath,
+          bigPosterPath: bigPosterPath,
+          titleImagePath: titleImagePath,
+          title: createFilmDto.title,
+          description: createFilmDto.description,
+          imdb_rating: createFilmDto.imdb_rating,
+          kinopoisk_rating: createFilmDto.kinopoisk_rating,
+          year: createFilmDto.year,
+          category: createFilmDto.category,
+        },
+        { transaction },
+      );
 
-    await this.videoVariantModel.bulkCreate(videoVariants); // Сохраняем все варианты сразу
+      // Сохраняем пути к видео в отдельной таблице
+      const videoVariants = m3u8Paths.map((path, index) => ({
+        filmId: film.id,
+        resolution: ['1080p', '720p', '480p'][index], // Или используйте ваш собственный массив разрешений
+        videoPath: path,
+      }));
 
-    // Сохраняем субтитры
-    const subtitleRecords = await Promise.all(
-      subtitleFiles.map(async (dto) => {
-        const subtitlePath = await this.fileService.saveSubtitle(
-          dto.buffer,
-          filename,
+      await this.videoVariantModel.bulkCreate(videoVariants, { transaction }); // Сохраняем все варианты сразу
+
+      try {
+        await Promise.all(
+          subtitleFiles.map(async (dto) => {
+            await this.subtitleServie.saveSubtitles(
+              dto.buffer,
+              dto.lang,
+              film.id,
+              transaction,
+            );
+          }),
         );
+      } catch (error) {
+        console.error('Error in createFilm:', error);
+        throw new InternalServerErrorException('Failed to create film no subs');
+      }
 
-        return {
-          path: subtitlePath, // Теперь это строка
-          language: dto.lang, // Пример, как определить язык
-          filmId: film.id, // Связываем субтитры с фильмом
-        };
-      }),
-    );
+      await transaction.commit();
 
-    // Создаем записи о субтитрах
-    await this.subtitleModel.bulkCreate(subtitleRecords); // Сохраняем все субтитры сразу
-
-    return film;
+      return film;
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Error in createFilm:', error);
+      throw new InternalServerErrorException('Failed to create film');
+    }
   }
 
   async getAllFilms(): Promise<Film[]> {

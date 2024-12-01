@@ -8,6 +8,7 @@ import {
   Get,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
@@ -22,12 +23,16 @@ import { FilmService } from './films.service';
 import { CreateFilmDto } from './dto/create-film.dto';
 import { Film } from './films.model';
 import { extname } from 'path';
+import { Roles } from 'src/auth/roles-auth.decorator';
+import { RolesGuard } from 'src/auth/role.guard';
 
 @ApiTags('Films')
 @Controller('films')
 export class FilmController {
   constructor(private readonly filmService: FilmService) {}
 
+  @Roles('ADMIN')
+  @UseGuards(RolesGuard)
   @Post('create')
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -175,6 +180,8 @@ export class FilmController {
     return this.filmService.getFilmById(id);
   }
 
+  @Roles('ADMIN')
+  @UseGuards(RolesGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Удаление фильма по ID' })
   @ApiParam({ name: 'id', required: true, description: 'ID фильма' })

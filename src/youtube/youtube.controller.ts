@@ -1,11 +1,27 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
-import { YouTubeService } from './youtube.service';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { YouTubeService } from './youtube.service';
 
 @ApiTags('YouTube')
 @Controller('captions')
 export class YouTubeController {
   constructor(private readonly youTubeService: YouTubeService) {}
+
+  @Get('/v2/download/:captionId')
+  async getCaptionsFile(@Param('captionId') captionId: string) {
+    console.log(captionId, 'captionId');
+    const subtitles = await this.youTubeService.getCaptionsFile(captionId);
+
+    return { subtitles };
+  }
+
+  @Get('/v2/:videoId')
+  async getCaptionsOauth(@Param('videoId') videoId: string) {
+    console.log(videoId, 'videoId');
+    const subtitles = await this.youTubeService.getCaptions(videoId);
+
+    return { subtitles };
+  }
 
   @Get(':videoURL')
   @ApiOperation({

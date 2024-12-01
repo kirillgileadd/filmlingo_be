@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "Node16",
     "declaration": true,
     "removeComments": true,
     "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node16",
     "target": "es6", //Previousely es2016
     "sourceMap": true,
     "outDir": "./dist",
