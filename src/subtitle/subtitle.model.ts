@@ -22,9 +22,15 @@ export class Subtitle extends Model<Subtitle> {
   @Column({ type: DataType.STRING, allowNull: false })
   endTime: string;
 
+  @Column({ type: DataType.INTEGER, allowNull: false })
+  startSeconds: number;
+
+  @Column({ type: DataType.INTEGER, allowNull: false })
+  endSeconds: number;
+
   @Column({ type: DataType.TEXT, allowNull: false })
   text: string;
 
-  @Column({ type: DataType.ARRAY(DataType.STRING), allowNull: true })
-  phrases: string[];
+  @Column({ type: DataType.JSONB, allowNull: true })
+  phrases: { original: string; translate: string }[];
 }

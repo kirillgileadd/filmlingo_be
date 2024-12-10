@@ -123,7 +123,31 @@ export class FilmService {
 
   async getFilmById(id: number): Promise<Film> {
     return this.filmModel.findByPk(id, {
-      include: [this.videoVariantModel, this.subtitleModel], // Включаем видео варианты
+      include: [
+        this.videoVariantModel,
+        {
+          model: this.subtitleModel,
+          required: false,
+          attributes: [
+            'id',
+            'language', // поле language
+            'startTime',
+            'endTime',
+            // Исправленный подзапрос с правильной таблицей
+            [
+              Sequelize.literal(`
+              (SELECT DISTINCT ON (sub.language) sub.id
+               FROM subtitles AS sub
+               WHERE sub."filmId" = ${id}
+               AND sub.language = subtitles.language
+               ORDER BY sub.language, sub.id ASC
+              )
+            `),
+              'id',
+            ],
+          ],
+        },
+      ], // Включаем видео варианты
     });
   }
 

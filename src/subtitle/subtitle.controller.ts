@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { SubtitleService } from './subtitle.service';
 import { CreateSubtitleDto } from './dto/create-subtitle.dto'; // Импортируйте DTO для создания субтитра
@@ -26,9 +27,12 @@ export class SubtitleController {
     return this.subtitleService.addSubtitle(createSubtitleDto);
   }
 
-  @Get(':filmId')
-  async getSubtitles(@Param('filmId') filmId: number): Promise<Subtitle[]> {
-    return this.subtitleService.getSubtitlesByFilmId(filmId);
+  @Get()
+  async getSubtitles(
+    @Query('filmId') filmId: number,
+    @Query('language') language?: string,
+  ): Promise<Subtitle[]> {
+    return this.subtitleService.getSubtitlesByFilmId(filmId, language);
   }
 
   @Roles('USER')

@@ -18,8 +18,11 @@ export class SubtitleService {
     return subtitle;
   }
 
-  async getSubtitlesByFilmId(filmId: number): Promise<Subtitle[]> {
-    return this.subtitleModel.findAll({ where: { filmId } });
+  async getSubtitlesByFilmId(
+    filmId: number,
+    language?: string,
+  ): Promise<Subtitle[]> {
+    return this.subtitleModel.findAll({ where: { filmId, language } });
   }
 
   async deleteSubtitle(subtitleId: number): Promise<void> {
@@ -41,17 +44,21 @@ export class SubtitleService {
     try {
       const subtitles = await this.subtitleProcessor.parse(buffer);
 
+      console.log(subtitles, 'subtitles');
+
       const subtitleInstances = subtitles.map((sub) => ({
         filmId,
         startTime: sub.startTime,
         endTime: sub.endTime,
         language: language,
+        startSeconds: sub.startSeconds,
+        endSeconds: sub.endSeconds,
         text: sub.text,
+        phrases: sub.phrases,
       }));
 
       console.log(subtitleInstances, 'subtitleInstances');
 
-      // Сохранение в базу данных
       await this.subtitleModel.bulkCreate(subtitleInstances, { transaction });
     } catch (error) {
       console.error('Error saving subtitles:', error);

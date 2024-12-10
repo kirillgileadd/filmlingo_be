@@ -32,6 +32,7 @@ export class TranslateService {
 
       return response.data.translations[0].text; // Извлекаем переведенный текст
     } catch (error) {
+      console.log(error);
       throw new Error('Error translating text');
     }
   }

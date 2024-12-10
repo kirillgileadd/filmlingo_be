@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { phraseDictionary } from './phraseDictionary';
 
 export interface SubtitleEntry {
   id: string;
@@ -7,12 +8,32 @@ export interface SubtitleEntry {
   endTime: string;
   endSeconds: number;
   text: string;
+  phrases: { original: string; translate: string }[] | null;
 }
 
 @Injectable()
 export class SubtitleProcessor {
+  private phraseDictionary: Record<string, string> = phraseDictionary;
+
+  public extractPhrases(
+    text: string,
+  ): { original: string; translate: string }[] {
+    const foundPhrases: { original: string; translate: string }[] = [];
+
+    for (const phrase in this.phraseDictionary) {
+      if (text.includes(phrase)) {
+        foundPhrases.push({
+          original: phrase,
+          translate: this.phraseDictionary[phrase],
+        });
+      }
+    }
+
+    return foundPhrases;
+  }
+
   async onModuleInit() {
-    const p = await this.extractPhrases('looking for');
+    const p = await this.extractPhrases('♪♪♪ looking for');
     console.log(p, 'phrases');
   }
   /**
@@ -30,19 +51,6 @@ export class SubtitleProcessor {
       ...sub,
       phrases: this.extractPhrases(sub.text), // Выделяем фразы
     }));
-  }
-
-  /**
-   * Выделяет фразы из текста с помощью compromise.
-   * @param text - Текст субтитра
-   * @returns Массив фраз, найденных в тексте
-   */
-  private async extractPhrases(text: string): Promise<string[]> {
-    const { default: nlp } = await import('compromise');
-    const doc = nlp(text); // Обрабатываем текст с помощью compromise
-    const phrases = doc.match('#Verb+ #Preposition+').out('array');
-
-    return phrases;
   }
 
   /**

@@ -1,17 +1,13 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { TranslateService } from './translate.service';
 import { TranslateDto } from './dto/translate.dto';
-import { Roles } from 'src/auth/roles-auth.decorator';
-import { RolesGuard } from 'src/auth/role.guard';
+import { TranslateService } from './translate.service';
 
 @ApiTags('Translate')
 @Controller('translate')
 export class TranslateController {
   constructor(private readonly translateService: TranslateService) {}
 
-  @Roles('USER')
-  @UseGuards(RolesGuard)
   @Post()
   @ApiOperation({ summary: 'Translate text to the target language' })
   @ApiBody({
