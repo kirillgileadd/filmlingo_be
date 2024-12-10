@@ -49,6 +49,14 @@ export class WordsController {
     return this.wordsService.addWord(userId, createWordDto);
   }
 
+  @Roles('USER')
+  @UseGuards(RolesGuard)
+  @Get('/find-random')
+  async findRandomWords(@Req() req) {
+    const userId = req.user.id;
+    return this.wordsService.findRandomWords(userId);
+  }
+
   @ApiOperation({ summary: 'Получить все слова' })
   @ApiResponse({ status: 200, description: 'Возвращает список всех слов.' })
   @Roles('ADMIN')

@@ -56,26 +56,21 @@ export class WordsService {
   async addWord(userId: number, createWordDto: CreateWordDto) {
     const { original, translation, phrase } = createWordDto;
 
-    // Проверяем, есть ли слово в базе
     let word = await this.wordModel.findOne({
       where: { original, translation },
     });
 
     if (!word) {
-      // Если слово отсутствует, создаем новое
       word = await this.create({ original, translation });
     }
 
-    // Проверяем, связано ли это слово с текущим пользователем
     const userWord = await this.userWordModel.findOne({
       where: { userId, wordId: word.id },
     });
 
     if (!userWord) {
-      // Связываем слово с пользователем, добавляя фразу
       await this.userWordModel.create({ userId, wordId: word.id, phrase });
     } else if (phrase) {
-      // Обновляем фразу, если она передана
       userWord.phrase = phrase;
       await userWord.save();
     }
@@ -96,6 +91,45 @@ export class WordsService {
     return { message: 'Word removed from user dictionary' };
   }
 
+  async findRandomWords(userId: number, count: number = 20) {
+    console.log(userId, 'userIdasdad');
+    const userWords = await this.userWordModel.findAll({
+      where: { userId: userId },
+      attributes: ['id', 'phrase', 'createdAt'],
+      include: [
+        {
+          model: this.wordModel,
+        },
+      ],
+    });
+
+    console.log(userWords, 'userWords');
+
+    if (!userWords || userWords.length === 0) {
+      throw new NotFoundException('No words found for the user');
+    }
+
+    const shuffledWords = userWords.sort(() => 0.5 - Math.random());
+    const selectedWords = shuffledWords.slice(
+      0,
+      Math.min(count, userWords.length),
+    );
+
+    const words = selectedWords.map((userWord) => ({
+      id: userWord.id,
+      original: userWord.word.original,
+      translation: userWord.word.translation,
+      creationAt: userWord.createdAt,
+      phrase: userWord.phrase,
+    }));
+
+    return {
+      words,
+      totalCount: userWords.length,
+      returnedCount: words.length,
+    };
+  }
+
   async create(createWordDto: CreateWordDto) {
     const { original, translation } = createWordDto;
 
@@ -108,7 +142,6 @@ export class WordsService {
     });
   }
 
-  // Получить одно слово по id
   async findOne(id: number) {
     const word = await this.wordModel.findOne({
       where: { id },
@@ -122,7 +155,6 @@ export class WordsService {
     return word;
   }
 
-  // Обновить слово
   async update(id: number, updateWordDto: UpdateWordDto) {
     const word = await this.wordModel.findOne({ where: { id } });
 
@@ -132,7 +164,6 @@ export class WordsService {
 
     const { original, translation } = updateWordDto;
 
-    // Обновляем только те поля, которые переданы
     if (original) word.original = original;
     if (translation) word.translation = translation;
 
@@ -149,12 +180,10 @@ export class WordsService {
       throw new NotFoundException('Word not found');
     }
 
-    // Удаляем все связи с пользователями, где это слово связано
     await this.userWordModel.destroy({
       where: { wordId: word.id },
     });
 
-    // Удаляем само слово
     await word.destroy();
 
     return { message: 'Word and its associations removed successfully' };
