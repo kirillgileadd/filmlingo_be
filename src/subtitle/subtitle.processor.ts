@@ -32,10 +32,6 @@ export class SubtitleProcessor {
     return foundPhrases;
   }
 
-  async onModuleInit() {
-    const p = await this.extractPhrases('♪♪♪ looking for');
-    console.log(p, 'phrases');
-  }
   /**
    * Парсит буфер субтитров в массив объектов.
    * @param buffer - Буфер файла субтитров

@@ -1,1 +1,3 @@
 uploads/*
+minio-data/*
+postgres-data/*

@@ -26,7 +26,7 @@ export class YandexIamTokenService implements OnModuleInit {
   }
 
   private async refreshIamToken() {
-    const yandexOauthToken = process.env.YANDEX_OAUTH_TOKEN; // Храните в .env
+    const yandexOauthToken = process.env.YANDEX_OAUTH_TOKEN; // Храните в development.env
     if (!yandexOauthToken) {
       throw new Error('YANDEX_OAUTH_TOKEN is not set');
     }

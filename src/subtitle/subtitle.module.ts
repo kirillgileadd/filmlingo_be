@@ -10,6 +10,6 @@ import { TokenModule } from 'src/token/token.module';
   imports: [SequelizeModule.forFeature([Subtitle]), TokenModule],
   providers: [SubtitleService, SubtitleProcessor],
   controllers: [SubtitleController],
-  exports: [SubtitleService],
+  exports: [SubtitleService, SubtitleProcessor],
 })
 export class SubtitleModule {}

@@ -1,3 +1,6 @@
+import { SubtitleProcessor } from '../subtitle/subtitle.processor';
+import { Injectable } from '@nestjs/common';
+
 const RE_YOUTUBE =
   /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
 const USER_AGENT =
@@ -62,7 +65,9 @@ export interface TranscriptResponse {
 /**
  * Class to retrieve transcript if exist
  */
+@Injectable()
 export class YoutubeTranscript {
+  constructor(private readonly subtitleProcessor: SubtitleProcessor) {}
   /**
    * Fetch transcript from YTB Video
    * @param videoId Video url or video identifier
@@ -152,6 +157,7 @@ export class YoutubeTranscript {
 
     return results.map((result) => ({
       text: result[3],
+      phrases: this.subtitleProcessor.extractPhrases(result[3]),
       duration: parseFloat(result[2]),
       startSeconds: parseFloat(result[1]),
       offset: parseFloat(result[1]),

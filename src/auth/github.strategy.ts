@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-github2';
-import { AuthService } from './auth.service'; // Ваш AuthService
+import { AuthService } from './auth.service';
+import * as process from 'node:process'; // Ваш AuthService
 
 export type GithubProfile = {
   displayName?: string;
@@ -17,7 +18,7 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
     super({
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: 'http://localhost:8000/auth/github/callback',
+      callbackURL: process.env.GITHUB_REDIRECT_URL,
       scope: ['user:email'],
     });
   }
