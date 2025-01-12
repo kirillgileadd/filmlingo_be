@@ -35,7 +35,10 @@ async function start() {
   // app.useGlobalPipes(new ValidationPipe());
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('/api/docs', app, document);
+
+  SwaggerModule.setup('/api/docs', app, document, {
+    jsonDocumentUrl: '/swagger/json',
+  });
 
   app
     .getHttpAdapter()

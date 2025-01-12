@@ -16,7 +16,6 @@ import { FilmsModule } from './films/films.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { SubtitleModule } from './subtitle/subtitle.module';
-import { YouTubeModule } from './youtube/youtube.module';
 import { TranslateModule } from './translate/translate.module';
 import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module';
 import { WordsModule } from './words/words.module';
@@ -50,7 +49,6 @@ import { GooogleToken } from './auth/google-token.model';
     WordsModule,
     YandexIamTokenModule,
     TranslateModule,
-    YouTubeModule,
     AuthModule,
     TokenModule,
     UsersModule,

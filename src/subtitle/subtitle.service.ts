@@ -4,6 +4,7 @@ import { CreateSubtitleDto } from './dto/create-subtitle.dto'; // Импорти
 import { Transaction } from 'sequelize';
 import { InjectModel } from '@nestjs/sequelize';
 import { SubtitleProcessor } from './subtitle.processor';
+import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
 
 @Injectable()
 export class SubtitleService {
@@ -23,6 +24,26 @@ export class SubtitleService {
     language?: string,
   ): Promise<Subtitle[]> {
     return this.subtitleModel.findAll({ where: { filmId, language } });
+  }
+
+  async getYoutubeSubtitles(videoId: string, language: string) {
+    const subtitles = await getSubtitles({ videoID: videoId, lang: language });
+    const details = await getVideoDetails({ videoID: videoId, lang: language });
+
+    return {
+      subtitles: subtitles.map((sub) => ({
+        filmId: 0,
+        language: language,
+        startSeconds: sub.start,
+        text: sub.text,
+        phrases: [],
+        startTime: 0,
+        endTime: 0,
+        endSeconds: sub.start + sub.dur,
+        id: Math.random(),
+      })),
+      details: details,
+    };
   }
 
   async deleteSubtitle(subtitleId: number): Promise<void> {
