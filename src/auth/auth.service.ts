@@ -11,9 +11,11 @@ import { MailService } from '../mail/mail.service';
 import { TokenService } from '../token/token.service';
 import { UserDto } from '../users/dto/user.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { ResetPasswordDto } from '../users/dto/reset-password-dto';
+import { ResetPasswordDto } from './dto/reset-password-dto';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { User } from 'src/users/users.model';
+import { plainToInstance } from 'class-transformer';
+import { RegistrationUserDto } from './dto/registration-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -33,7 +35,7 @@ export class AuthService {
     });
   }
 
-  async registration(createUserDto: CreateUserDto) {
+  async registration(createUserDto: RegistrationUserDto) {
     const candidate = await this.userService.getUsersByEmail(
       createUserDto.email,
     );
@@ -166,11 +168,13 @@ export class AuthService {
 
       await user.update({ forgotPasswordLink });
 
-      return user;
+      return plainToInstance(UserDto, user, {
+        excludeExtraneousValues: true,
+      });
     }
 
     throw new HttpException(
-      'Пользователь с таким email не найлден',
+      'Пользователь с таким email не найден',
       HttpStatus.NOT_FOUND,
     );
   }
@@ -181,8 +185,11 @@ export class AuthService {
     );
     const hashPassword = await bcrypt.hash(userDto.password, 5);
     if (user) {
-      await user.update({ password: hashPassword });
-      return user;
+      await user.update({ password: hashPassword, forgotPasswordLink: null });
+
+      return plainToInstance(UserDto, user, {
+        excludeExtraneousValues: true,
+      });
     }
 
     throw new HttpException(

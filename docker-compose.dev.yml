@@ -26,6 +26,13 @@ services:
     volumes:
       - ./postgres-data:/var/lib/postgresql/data # Локальная папка для хранения данных PostgreSQL
 
+  mailer:
+    image: mailhog/mailhog:latest
+    container_name: filmlingo-mailer
+    ports:
+      - "1025:1025" # SMTP порт
+      - "8025:8025" # Веб-интерфейс для просмотра писем
+
 volumes:
   minio-data: # Том для MinIO (если не хотите использовать локальную папку)
   postgres-data: # Том для PostgreSQL (если не хотите использовать локальную папку)

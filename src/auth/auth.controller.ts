@@ -13,10 +13,12 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { Response, Request } from 'express';
-import { ForgotPassUserDto } from '../users/dto/forgot-pass-user.dto';
-import { ResetPasswordDto } from '../users/dto/reset-password-dto';
+import { Request, Response } from 'express';
+import { ForgotPassUserDto } from './dto/forgot-pass-user.dto';
+import { ResetPasswordDto } from './dto/reset-password-dto';
 import { AuthGuard } from '@nestjs/passport';
+import { LoginUserDto } from './dto/login-user.dto';
+import { RegistrationUserDto } from './dto/registration-user.dto';
 
 @ApiTags('Авторизация')
 @Controller('auth')
@@ -25,20 +27,21 @@ export class AuthController {
 
   @Post('/login')
   async login(
-    @Body() userDto: CreateUserDto,
+    @Body() userDto: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     const userData = await this.authService.login(userDto);
+    console.log(userData, 'userData');
     res.cookie('refresh_token', userData.refreshToken, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    return this.authService.login(userDto);
+    return userData;
   }
 
   @Post('/registration')
   async registration(
-    @Body() userDto: CreateUserDto,
+    @Body() userDto: RegistrationUserDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     const userData = await this.authService.registration(userDto);
@@ -98,14 +101,12 @@ export class AuthController {
 
   @Post('/forgot-password')
   async forgotPassword(@Body() userDto: ForgotPassUserDto) {
-    const userData = await this.authService.forgotPassword(userDto.email);
-    return userData;
+    return await this.authService.forgotPassword(userDto.email);
   }
 
   @Post('/reset-password')
   async resetPassword(@Body() userDto: ResetPasswordDto) {
-    const userData = await this.authService.resetPassword(userDto);
-    return userData;
+    return await this.authService.resetPassword(userDto);
   }
 
   @Get('github')

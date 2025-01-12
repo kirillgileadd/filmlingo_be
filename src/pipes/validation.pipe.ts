@@ -6,10 +6,15 @@ import {
 } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
-
 @Injectable()
 export class ValidationPipe implements PipeTransform<any> {
   async transform(value: any, metadata: ArgumentMetadata): Promise<any> {
+    console.log(value, 'value validation');
+
+    if (!metadata.metatype || !this.toValidate(metadata.metatype)) {
+      return value; // Если это простой тип, просто возвращаем значение
+    }
+
     const obj = plainToClass(metadata.metatype, value);
     const errors = await validate(obj);
 
@@ -31,12 +36,19 @@ export class ValidationPipe implements PipeTransform<any> {
 
       if (property && constraints) {
         formattedErrors[property] = Object.values(constraints);
-      } else {
+      } else if (error.children && error.children.length) {
         const nestedErrors = this.formatErrors(error.children);
         Object.assign(formattedErrors, nestedErrors);
       }
 
       return formattedErrors;
     }, {});
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  private toValidate(metatype: Function): boolean {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    const types: Function[] = [String, Boolean, Number, Array, Object];
+    return !types.includes(metatype);
   }
 }

@@ -21,8 +21,6 @@ import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module
 import { WordsModule } from './words/words.module';
 import { Word } from './words/word.model';
 import { UserWords } from './words/user-words.model';
-import { GoogleModule } from './auth/google.module';
-import { GooogleToken } from './auth/google-token.model';
 
 @Module({
   controllers: [],
@@ -36,7 +34,7 @@ import { GooogleToken } from './auth/google-token.model';
       serveRoot: '/uploads/',
     }),
     SequelizeModule.forRoot({
-      models: [Role, UserRoles, Token, User, Word, UserWords, GooogleToken],
+      models: [Role, UserRoles, Token, User, Word, UserWords],
       dialect: 'postgres',
       autoLoadModels: true,
       host: process.env.POSTGRES_HOST,
@@ -45,7 +43,6 @@ import { GooogleToken } from './auth/google-token.model';
       port: Number(process.env.POSTGRES_PORT),
       password: process.env.POSTGRES_PASSWORD,
     }),
-    GoogleModule,
     WordsModule,
     YandexIamTokenModule,
     TranslateModule,

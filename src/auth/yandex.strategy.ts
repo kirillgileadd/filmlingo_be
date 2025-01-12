@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-yandex';
 import { AuthService } from './auth.service';
+import * as process from 'node:process';
 
 type YandexProfile = {
   id: string;
@@ -24,7 +25,7 @@ export class YandexStrategy extends PassportStrategy(Strategy, 'yandex') {
     super({
       clientID: process.env.YANDEX_CLIENT_ID,
       clientSecret: process.env.YANDEX_CLIENT_SECRET,
-      callbackURL: 'http://localhost:8000/auth/yandex/callback',
+      callbackURL: process.env.YANDEX_REDIRECT_URL,
     });
   }
 
