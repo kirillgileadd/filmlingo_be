@@ -1,23 +1,20 @@
 // controllers/film.controller.ts
 import {
-  Controller,
-  Post,
   Body,
-  UploadedFiles,
-  UseInterceptors,
+  Controller,
+  Delete,
   Get,
   Param,
-  Delete,
+  Post,
   UseGuards,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
-  ApiConsumes,
   ApiBody,
+  ApiConsumes,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
-  ApiParam,
 } from '@nestjs/swagger';
 import { FilmService } from './films.service';
 import { CreateFilmDto } from './dto/create-film.dto';
@@ -25,6 +22,8 @@ import { Film } from './films.model';
 import { extname } from 'path';
 import { Roles } from 'src/auth/roles-auth.decorator';
 import { RolesGuard } from 'src/auth/role.guard';
+import { CreateSubtitleDto } from '../subtitle/dto/create-subtitle.dto';
+import { FormDataRequest } from 'nestjs-form-data';
 
 @ApiTags('Films')
 @Controller('films')
@@ -34,15 +33,7 @@ export class FilmController {
   @Roles('ADMIN')
   @UseGuards(RolesGuard)
   @Post('create')
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'video', maxCount: 1 },
-      { name: 'poster', maxCount: 1 },
-      { name: 'big_poster', maxCount: 1 },
-      { name: 'title_image', maxCount: 1 },
-      { name: 'subtitlesFiles', maxCount: 4 },
-    ]),
-  )
+  @FormDataRequest()
   @ApiOperation({ summary: 'Создать новую запись фильма с видео и постером' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -98,51 +89,37 @@ export class FilmController {
       },
     },
   })
-  async createFilm(
-    @UploadedFiles()
-    files: {
-      video?: Express.Multer.File[];
-      poster?: Express.Multer.File[];
-      big_poster?: Express.Multer.File[];
-      title_image?: Express.Multer.File[];
-      subtitlesFiles?: Express.Multer.File[];
-    },
-    @Body() createFilmDto: CreateFilmDto,
-  ) {
-    console.log(files.subtitlesFiles, 'sub files');
-    console.log(createFilmDto.subtitles, 'sub files arr');
-    const videoBuffer = files.video[0].buffer;
-    const posterBuffer = files.poster[0].buffer;
-    const bigPosterBuffer = files.big_poster[0].buffer;
+  async createFilm(@Body() createFilmDto: CreateFilmDto) {
+    console.log(createFilmDto, 'createFilmDto');
 
-    const titleImageBuffer = files.title_image[0].buffer;
+    const videoBuffer = createFilmDto.video.buffer;
+    const posterBuffer = createFilmDto.poster.buffer;
+    const bigPosterBuffer = createFilmDto.big_poster.buffer;
 
-    const filename = files.video[0].originalname;
+    const titleImageBuffer = createFilmDto.title_image.buffer;
 
-    const posterExtension = extname(files.poster[0].originalname).toLowerCase();
+    const filename = createFilmDto.video.originalName;
+
+    const posterExtension = extname(
+      createFilmDto.poster.originalName,
+    ).toLowerCase();
     const bigPosterExtension = extname(
-      files.big_poster[0].originalname,
+      createFilmDto.big_poster.originalName,
     ).toLowerCase();
     const titleImageExtension = extname(
-      files.title_image[0].originalname,
+      createFilmDto.title_image.originalName,
     ).toLowerCase();
-    console.log(posterExtension, bigPosterExtension, titleImageExtension);
 
-    if (files.subtitlesFiles && createFilmDto.subtitles) {
-      // Преобразуем массив файлов в нужный формат
-      createFilmDto.subtitles = createFilmDto.subtitles.map(
-        (subtitle, index) => ({
-          buffer: files.subtitlesFiles[index].buffer,
-          lang: subtitle.lang,
-        }),
-      );
-    }
+    const subtitles: CreateSubtitleDto[] = createFilmDto.subtitles.map(
+      (subtitle, index) => ({
+        buffer: createFilmDto.subtitlesFiles[index].buffer,
+        language: subtitle.language,
+      }),
+    );
 
     createFilmDto.kinopoisk_rating = Number(createFilmDto.kinopoisk_rating);
     createFilmDto.imdb_rating = Number(createFilmDto.imdb_rating);
     createFilmDto.year = Number(createFilmDto.year);
-
-    console.log(createFilmDto, 'createFilmDto');
 
     return this.filmService.createFilm(
       createFilmDto,
@@ -154,7 +131,7 @@ export class FilmController {
       posterExtension,
       bigPosterExtension,
       titleImageExtension,
-      createFilmDto.subtitles,
+      subtitles,
     );
   }
 
@@ -189,7 +166,9 @@ export class FilmController {
   @ApiParam({ name: 'id', required: true, description: 'ID фильма' })
   @ApiResponse({ status: 204, description: 'Фильм успешно удален.' })
   @ApiResponse({ status: 404, description: 'Фильм не найден.' })
-  async deleteFilm(@Param('id') id: number): Promise<void> {
-    return this.filmService.deleteFilm(id);
+  async deleteFilm(@Param('id') id: string): Promise<void> {
+    const _id = parseInt(id, 10);
+
+    return this.filmService.deleteFilm(_id);
   }
 }

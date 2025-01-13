@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
 import { InjectModel } from '@nestjs/sequelize';
@@ -34,7 +39,9 @@ export class WordsService {
       ],
       offset,
       limit,
-      order: [[orderValue, order?.toUpperCase()]],
+      ...(orderValue && order
+        ? { order: [[orderValue, order?.toUpperCase()]] }
+        : {}),
     });
 
     const words = baseWords.rows.map((userWord) => ({
@@ -103,8 +110,6 @@ export class WordsService {
       ],
     });
 
-    console.log(userWords, 'userWords');
-
     if (!userWords || userWords.length === 0) {
       throw new NotFoundException('No words found for the user');
     }
@@ -143,6 +148,10 @@ export class WordsService {
   }
 
   async findOne(id: number) {
+    if (!id) {
+      throw new BadRequestException('Не передан id');
+    }
+
     const word = await this.wordModel.findOne({
       where: { id },
       attributes: ['id', 'original', 'translation'],
@@ -172,12 +181,16 @@ export class WordsService {
   }
 
   async remove(id: number) {
+    if (!id) {
+      throw new BadRequestException('Не передан id');
+    }
+
     const word = await this.wordModel.findOne({
       where: { id },
     });
 
     if (!word) {
-      throw new NotFoundException('Word not found');
+      throw new NotFoundException('Слово не найдено');
     }
 
     await this.userWordModel.destroy({
@@ -186,6 +199,6 @@ export class WordsService {
 
     await word.destroy();
 
-    return { message: 'Word and its associations removed successfully' };
+    return { message: 'Слово и связанные с ним ассоциации успешно удалены' };
   }
 }

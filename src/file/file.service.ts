@@ -1,24 +1,12 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
-import { diskStorage } from 'multer';
 import path from 'path';
-import { extname } from 'path';
 import { normalizeFilename } from 'src/uitils/normalizeFilename';
-import { v4 as uuidv4 } from 'uuid';
-
-// const execAsync = promisify(exec);
 
 @Injectable()
 export class FileService {
-  private validImageExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
-  private validVideoExtensions = ['.mp4', '.mkv', '.avi'];
-
   private s3Client = new S3Client({
     endpoint: process.env.S3_ENDPOINT, // Указываем MinIO endpoint
     region: process.env.S3_REGION,
@@ -31,41 +19,12 @@ export class FileService {
 
   private bucketName = process.env.S3_BUCKET_NAME;
 
-  storage = (destination: string) =>
-    diskStorage({
-      destination: `./uploads/${destination}`,
-      filename: (req, file, callback) => {
-        const uniqueSuffix = uuidv4();
-        const ext = extname(file.originalname).toLowerCase();
-        callback(null, `${uniqueSuffix}${ext}`);
-      },
-    });
-
-  validateImageFile(file: Express.Multer.File): void {
-    const ext = extname(file.originalname).toLowerCase();
-    if (!this.validImageExtensions.includes(ext)) {
-      throw new BadRequestException('Invalid image file format');
-    }
-  }
-
-  validateVideoFile(file: Express.Multer.File): void {
-    const ext = extname(file.originalname).toLowerCase();
-    if (!this.validVideoExtensions.includes(ext)) {
-      throw new BadRequestException('Invalid video file format');
-    }
-  }
-
-  getFileUrl(filename: string, type: 'video' | 'image'): string {
-    return `/uploads/${type}/${filename}`;
-  }
-
   async savePoster(
     buffer: Buffer,
     filename: string,
     extension: string,
     type: 'poster' | 'bigPoster' | 'titleImage',
   ): Promise<string> {
-    console.log(extension, 'extension');
     const supportedFormats = ['.jpg', '.jpeg', '.webp', '.png'];
     if (!supportedFormats.includes(extension)) {
       throw new Error(

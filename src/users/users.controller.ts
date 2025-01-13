@@ -15,7 +15,7 @@ import { RolesGuard } from '../auth/role.guard';
 import { AddRoleDto } from './dto/add-role.dto';
 import { BanUserDto } from './dto/ban-user.dto';
 
-@ApiTags('Пльзователи')
+@ApiTags('Пользователи')
 @Controller('users')
 export class UsersController {
   constructor(private userService: UsersService) {}
@@ -29,7 +29,7 @@ export class UsersController {
 
   @ApiOperation({ summary: 'Список всех пользователей' })
   @ApiResponse({ status: 200, type: [User] })
-  // @Roles('ADMIN')
+  @Roles('ADMIN')
   @UseGuards(RolesGuard)
   @Get()
   getAll() {

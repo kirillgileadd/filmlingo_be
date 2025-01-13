@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -6,11 +7,12 @@ import {
 import { InjectModel } from '@nestjs/sequelize';
 import { Subtitle } from 'src/subtitle/subtitle.model';
 import { FileService } from '../file/file.service';
-import { CreateFilmDto, SubtitleDto } from './dto/create-film.dto';
+import { CreateFilmDto } from './dto/create-film.dto';
 import { Film } from './films.model';
 import { VideoVariant } from './video-variant.model';
 import { SubtitleService } from 'src/subtitle/subtitle.service';
 import { Sequelize } from 'sequelize';
+import { CreateSubtitleDto } from '../subtitle/dto/create-subtitle.dto';
 
 @Injectable()
 export class FilmService {
@@ -36,7 +38,7 @@ export class FilmService {
     posterExtension: string,
     bigPosterExtension: string,
     titleImageExtension: string,
-    subtitleFiles: SubtitleDto[],
+    subtitleFiles: CreateSubtitleDto[],
   ): Promise<Film> {
     const transaction = await this.sequelize.transaction();
 
@@ -96,7 +98,7 @@ export class FilmService {
           subtitleFiles.map(async (dto) => {
             await this.subtitleServie.saveSubtitles(
               dto.buffer,
-              dto.lang,
+              dto.language,
               film.id,
               transaction,
             );
@@ -147,11 +149,15 @@ export class FilmService {
             ],
           ],
         },
-      ], // Включаем видео варианты
+      ],
     });
   }
 
   async deleteFilm(id: number): Promise<void> {
+    if (!id || !Number.isInteger(id)) {
+      throw new BadRequestException('Not Found');
+    }
+
     const film = await this.getFilmById(id);
     if (film) {
       await film.destroy();

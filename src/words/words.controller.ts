@@ -22,6 +22,7 @@ import { Roles } from 'src/auth/roles-auth.decorator';
 import { CreateWordDto } from './dto/create-word.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
 import { WordsService } from './words.service';
+import { GetUserWordsQueryDto } from './dto/get-words-query.dto';
 
 @ApiTags('words')
 @Controller('words')
@@ -74,24 +75,18 @@ export class WordsController {
   @Roles('USER')
   @UseGuards(RolesGuard)
   @Get('/my-words')
-  async getUserWords(
-    @Req() req,
-    @Query('page') page: string,
-    @Query('pageSize') pageSize: string,
-    @Query('order') order?: string,
-    @Query('orderValue') orderValue?: string,
-  ) {
+  async getUserWords(@Req() req, @Query() query: GetUserWordsQueryDto) {
     const userId = req.user.id;
 
-    const pageNumber = parseInt(page, 10) || 1;
-    const size = parseInt(pageSize, 10) || 10;
+    const pageNumber = parseInt(query.page, 10) || 1;
+    const size = parseInt(query.pageSize) || 10;
 
     return this.wordsService.findUsersWords(
       userId,
       pageNumber,
       size,
-      order,
-      orderValue,
+      query.order,
+      query.orderValue,
     );
   }
 

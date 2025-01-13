@@ -37,8 +37,8 @@ export class Role extends Model<Role, RoleCreationAttrs> {
   value: string;
 
   @ApiProperty({
-    example: 'Опсание роли',
-    description: 'Опсание',
+    example: 'Описание роли',
+    description: 'Описание',
   })
   @Column({
     type: DataType.STRING,

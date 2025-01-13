@@ -21,11 +21,13 @@ import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module
 import { WordsModule } from './words/words.module';
 import { Word } from './words/word.model';
 import { UserWords } from './words/user-words.model';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   controllers: [],
   providers: [],
   imports: [
+    NestjsFormDataModule,
     ConfigModule.forRoot({
       envFilePath: `.${process.env.NODE_ENV}.env`,
     }),

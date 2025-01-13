@@ -8,6 +8,9 @@ import { BanUserDto } from './dto/ban-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './users.model';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { plainToInstance } from 'class-transformer';
+import { UserProfileDto } from './dto/user-profile.dto';
+import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class UsersService {
@@ -60,7 +63,9 @@ export class UsersService {
       include: { all: true },
     });
 
-    return user;
+    return plainToInstance(UserProfileDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async getUsersByEmail(email: string): Promise<User | null> {
@@ -99,25 +104,38 @@ export class UsersService {
   }
 
   async addRole(dto: AddRoleDto) {
-    const user = await this.userRepository.findByPk(dto.userId);
+    const user = await this.userRepository.findByPk(dto.userId, {
+      include: { model: Role, as: 'roles' },
+    });
     const role = await this.roleSevice.getRoleByValue(dto.value);
 
     if (role && user) {
       await user.$add('roles', role);
-      return dto;
+      await user.reload({ include: { model: Role, as: 'roles' } });
+      return plainToInstance(UserDto, user, {
+        excludeExtraneousValues: true,
+      });
     }
 
     throw new HttpException(
-      'Пользователь или роль ненайдены',
+      'Пользователь или роль не найден',
       HttpStatus.NOT_FOUND,
     );
   }
 
   async ban(dto: BanUserDto) {
-    const user = await this.userRepository.findByPk(dto.userId);
+    const user = await this.userRepository.findByPk(dto.userId, {
+      include: { model: Role, as: 'roles' },
+    });
     if (user) {
       await user.update({ banReason: dto.banReason, banned: true });
-      return user;
+      return {
+        ...plainToInstance(UserDto, user, {
+          excludeExtraneousValues: true,
+        }),
+        banned: true,
+        banReason: dto.banReason,
+      };
     }
 
     throw new HttpException('Пользователь не найден', HttpStatus.NOT_FOUND);

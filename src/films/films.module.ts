@@ -9,9 +9,11 @@ import { VideoVariant } from './video-variant.model';
 import { SubtitleModule } from 'src/subtitle/subtitle.module';
 import { TokenModule } from 'src/token/token.module';
 import { Sequelize } from 'sequelize-typescript';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   imports: [
+    NestjsFormDataModule,
     SequelizeModule.forFeature([Film, VideoVariant, Subtitle]),
     SubtitleModule,
     TokenModule,
