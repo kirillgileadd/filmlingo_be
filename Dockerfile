@@ -1,23 +1,25 @@
-# Stage 1: Build application
-FROM node:22 AS builder
+FROM node:22-alpine AS builder
+
 WORKDIR /app
 
-# Копируем package.json и устанавливаем зависимости
 COPY package*.json ./
 RUN npm install
 
-# Копируем исходный код и билдим проект
 COPY . .
+COPY .production.env .production.env
+
 RUN npm run build
 
-# Stage 2: Runtime
-FROM node:22
+FROM node:22-alpine AS production
+
 WORKDIR /app
 
-# Копируем собранное приложение из Stage 1
-COPY --from=builder /app ./
+COPY --from=builder /app/config/ /app/config/
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/.production.env ./.production.env
+COPY --from=builder /app/package.json ./package.json
 
-# Указываем переменные окружения и стартуем сервер Nest.js
-ENV PORT=8000
 EXPOSE 8000
+
 CMD ["npm", "run", "start:prod"]

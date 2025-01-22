@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
+import * as process from 'node:process';
 
 @Injectable()
 export class YandexIamTokenService implements OnModuleInit {
@@ -32,10 +33,9 @@ export class YandexIamTokenService implements OnModuleInit {
     }
 
     try {
-      const response = await axios.post(
-        'https://iam.api.cloud.yandex.net/iam/v1/tokens',
-        { yandexPassportOauthToken: yandexOauthToken },
-      );
+      const response = await axios.post(process.env.YANDEX_IAM_URL, {
+        yandexPassportOauthToken: yandexOauthToken,
+      });
 
       this.iamToken = response.data.iamToken;
       // Устанавливаем время истечения токена с запасом

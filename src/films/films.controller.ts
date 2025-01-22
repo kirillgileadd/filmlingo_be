@@ -1,4 +1,3 @@
-// controllers/film.controller.ts
 import {
   Body,
   Controller,

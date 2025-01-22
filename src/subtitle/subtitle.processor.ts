@@ -50,36 +50,6 @@ export class SubtitleProcessor {
   }
 
   /**
-   * Выделяет фразы из текста субтитров.
-   * @param subtitles - Массив субтитров
-   * @returns Массив субтитров с выделенными фразами
-   */
-  highlightPhrases(
-    subtitles: SubtitleEntry[],
-    phrases: string[],
-  ): SubtitleEntry[] {
-    return subtitles.map((sub) => ({
-      ...sub,
-      text: this.applyHighlighting(sub.text, phrases),
-    }));
-  }
-
-  /**
-   * Помечает фразы в тексте.
-   * @param text - Текст субтитра
-   * @param phrases - Массив фраз для выделения
-   * @returns Текст с выделенными фразами
-   */
-  private applyHighlighting(text: string, phrases: string[]): string {
-    let highlightedText = text;
-    for (const phrase of phrases) {
-      const regex = new RegExp(`(${this.escapeRegex(phrase)})`, 'gi');
-      highlightedText = highlightedText.replace(regex, '<b>$1</b>'); // Используем <b> для выделения
-    }
-    return highlightedText;
-  }
-
-  /**
    * Экранирует специальные символы для RegExp.
    * @param phrase - Фраза для экранирования
    * @returns Экранированная строка

@@ -2,11 +2,11 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { YandexIamTokenService } from 'src/yandex-iam-token/yandex-iam-token.service';
+import * as process from 'node:process';
 
 @Injectable()
 export class TranslateService {
-  private readonly apiUrl: string =
-    'https://translate.api.cloud.yandex.net/translate/v2/translate';
+  private readonly apiUrl: string = process.env.YANDEX_TRANSLATE_URL;
 
   constructor(
     private readonly httpService: HttpService,
@@ -20,7 +20,7 @@ export class TranslateService {
       Authorization: `Bearer ${token}`,
     };
     const data = {
-      folderId: 'b1gca7ejmkbveobiesbh',
+      folderId: process.env.YANDEX_FOLDER_ID,
       texts: [text],
       targetLanguageCode: targetLang,
     };

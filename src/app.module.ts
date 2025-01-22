@@ -44,6 +44,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
       username: process.env.POSTGRES_USER,
       port: Number(process.env.POSTGRES_PORT),
       password: process.env.POSTGRES_PASSWORD,
+      logging: true,
     }),
     WordsModule,
     YandexIamTokenModule,
@@ -63,5 +64,6 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
 export class AppModule {
   constructor() {
     console.log(process.env.POSTGRES_PASSWORD);
+    console.log(process.env);
   }
 }

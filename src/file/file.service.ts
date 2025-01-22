@@ -1,9 +1,14 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import path from 'path';
 import { normalizeFilename } from 'src/uitils/normalizeFilename';
+import axios from 'axios';
 
 @Injectable()
 export class FileService {
@@ -52,80 +57,6 @@ export class FileService {
 
     return `/${s3Key}`;
   }
-
-  async saveSubtitle(buffer: Buffer, name: string): Promise<string> {
-    const normalizedFilename = normalizeFilename(name);
-    const s3Key = `subtitles/${normalizedFilename}.srt`;
-
-    try {
-      await this.s3Client.send(
-        new PutObjectCommand({
-          Bucket: this.bucketName,
-          Key: s3Key,
-          Body: buffer,
-          ContentType: 'text/plain',
-        }),
-      );
-    } catch (error) {
-      console.error('Error uploading subtitle to S3:', error);
-      throw new InternalServerErrorException('Failed to upload subtitle');
-    }
-
-    return `/${s3Key}`;
-  }
-
-  // async processAndSaveVideo(
-  //   buffer: Buffer,
-  //   filename: string,
-  // ): Promise<string[]> {
-  //   // Заменяем пробелы на символы подчеркивания в имени файла
-  //   const sanitizedFilename = normalizeFilename(filename);
-
-  //   const uploadsDir = path.resolve(__dirname, '..', '..', 'uploads'); // Путь к директории uploads
-  //   const videoPath = path.join(uploadsDir, `${sanitizedFilename}.mp4`);
-  //   const hlsDir = path.join(uploadsDir, 'hls', sanitizedFilename);
-
-  //   // Убедитесь, что директория для HLS существует
-  //   if (!fs.existsSync(hlsDir)) {
-  //     fs.mkdirSync(hlsDir, { recursive: true });
-  //   }
-
-  //   // Сохраняем видеофайл
-  //   fs.writeFileSync(videoPath, buffer);
-
-  //   const resolutions = [
-  //     { resolution: '1080', bitrate: '3000k' },
-  //     { resolution: '720', bitrate: '1500k' },
-  //     { resolution: '480', bitrate: '800k' },
-  //   ];
-
-  //   const m3u8Paths: string[] = [];
-
-  //   for (const { resolution, bitrate } of resolutions) {
-  //     const m3u8Path = path.join(hlsDir, `${resolution}p`, 'index.m3u8');
-  //     const outputDir = path.join(hlsDir, `${resolution}p`);
-
-  //     // Убедитесь, что директория для конкретного качества существует
-  //     if (!fs.existsSync(outputDir)) {
-  //       fs.mkdirSync(outputDir, { recursive: true });
-  //     }
-
-  //     // Команда ffmpeg с кавычками для путей
-  //     const command = `ffmpeg -i "${videoPath}" -b:v ${bitrate} -hls_time 20 -hls_list_size 0 -f hls "${m3u8Path}"`;
-
-  //     try {
-  //       await execAsync(command);
-  //       m3u8Paths.push(
-  //         `/uploads/hls/${sanitizedFilename}/${resolution}p/index.m3u8`,
-  //       );
-  //     } catch (error) {
-  //       console.error('Error processing video:', error);
-  //       throw new InternalServerErrorException('Failed to process video');
-  //     }
-  //   }
-
-  //   return m3u8Paths; // Возвращаем массив путей к m3u8
-  // }
 
   async processAndSaveVideo(
     buffer: Buffer,
@@ -266,5 +197,49 @@ export class FileService {
     }
 
     return m3u8Paths;
+  }
+
+  async deleteFileFromS3(key: string): Promise<void> {
+    try {
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+      console.log(`File ${key} successfully deleted from S3.`);
+    } catch (error) {
+      console.error(`Failed to delete file ${key} from S3:`, error);
+      throw new Error('Failed to delete file from S3.');
+    }
+  }
+
+  async getS3KeysFromM3U8(url: string): Promise<string[]> {
+    try {
+      // Скачиваем m3u8 файл
+      const response = await axios.get(url);
+      const m3u8Content = response.data;
+
+      // Базовый путь для вычисления S3 ключей
+      const basePath = url.substring(0, url.lastIndexOf('/') + 1);
+
+      // Разбиваем содержимое на строки и фильтруем сегменты
+      const s3Keys = m3u8Content
+        .split('\n')
+        .filter((line) => line && !line.startsWith('#')) // Игнорируем комментарии (#EXTINF, #EXT-X, и т.д.)
+        .map((segmentPath) => {
+          // Формируем полный путь сегмента
+          const fullPath = new URL(segmentPath, basePath).toString();
+
+          // Извлекаем ключ S3 из полного пути
+          const s3Key = fullPath.replace(`${basePath}`, '');
+          return s3Key;
+        });
+
+      return s3Keys;
+    } catch (error) {
+      console.error('Failed to get S3 keys from m3u8:', error);
+      throw new Error('Failed to parse m3u8 file.');
+    }
   }
 }
