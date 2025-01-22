@@ -2,7 +2,6 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { YandexIamTokenService } from 'src/yandex-iam-token/yandex-iam-token.service';
-import * as process from 'node:process';
 
 @Injectable()
 export class TranslateService {
