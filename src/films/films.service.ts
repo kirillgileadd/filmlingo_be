@@ -132,10 +132,9 @@ export class FilmService {
           required: false,
           attributes: [
             'id',
-            'language', // поле language
+            'language',
             'startTime',
             'endTime',
-            // Исправленный подзапрос с правильной таблицей
             [
               Sequelize.literal(`
               (SELECT DISTINCT ON (sub.language) sub.id
@@ -160,7 +159,21 @@ export class FilmService {
 
     const film = await this.getFilmById(id);
     if (film) {
-      await film.destroy();
+      //TODO - del all s3 files
+      // await this.fileService.deleteFileFromS3(film.bigPosterPath);
+      // await this.fileService.deleteFileFromS3(film.posterPath);
+      // await this.fileService.deleteFileFromS3(film.titleImagePath);
+      film.videoVariants.map(async (videoVariant) => {
+        const indexPaths = await this.fileService.getS3KeysFromM3U8(
+          process.env.S3_PUBLIC_URL + videoVariant.videoPath,
+        );
+        console.log(indexPaths);
+        // indexPaths.map(
+        //   async (path) => await this.fileService.deleteFileFromS3(path),
+        // );
+        // await this.fileService.deleteFileFromS3(videoVariant.videoPath);
+        // await film.destroy();
+      });
     }
   }
 }

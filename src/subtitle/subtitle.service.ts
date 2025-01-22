@@ -36,7 +36,7 @@ export class SubtitleService {
         language: language,
         startSeconds: sub.start,
         text: sub.text,
-        phrases: [],
+        phrases: this.subtitleProcessor.extractPhrases(sub.text),
         startTime: 0,
         endTime: 0,
         endSeconds: sub.start + sub.dur,
@@ -65,8 +65,6 @@ export class SubtitleService {
     try {
       const subtitles = await this.subtitleProcessor.parse(buffer);
 
-      console.log(subtitles, 'subtitles');
-
       const subtitleInstances = subtitles.map((sub) => ({
         filmId,
         startTime: sub.startTime,
@@ -77,8 +75,6 @@ export class SubtitleService {
         text: sub.text,
         phrases: sub.phrases,
       }));
-
-      console.log(subtitleInstances, 'subtitleInstances');
 
       await this.subtitleModel.bulkCreate(subtitleInstances, { transaction });
     } catch (error) {

@@ -32,10 +32,9 @@ export class YandexIamTokenService implements OnModuleInit {
     }
 
     try {
-      const response = await axios.post(
-        'https://iam.api.cloud.yandex.net/iam/v1/tokens',
-        { yandexPassportOauthToken: yandexOauthToken },
-      );
+      const response = await axios.post(process.env.YANDEX_IAM_URL, {
+        yandexPassportOauthToken: yandexOauthToken,
+      });
 
       this.iamToken = response.data.iamToken;
       // Устанавливаем время истечения токена с запасом

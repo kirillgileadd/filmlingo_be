@@ -13,7 +13,7 @@ async function start() {
   app.use(cookieParser());
   app.enableCors({
     origin: ['http://localhost:3000', 'http://localhost:3001'],
-    // origin: "*",
+    // origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization', // добавляем разрешенные заголовки
     credentials: true,

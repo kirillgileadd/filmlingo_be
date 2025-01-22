@@ -35,9 +35,9 @@ export class SubtitleController {
     return this.subtitleService.getSubtitlesByFilmId(filmId, language);
   }
 
-  @Get('/youtube')
+  @Get('/youtube/:videoId')
   async getYoutubeSubtitles(
-    @Query('videoId') videoId: string,
+    @Param('videoId') videoId: string,
     @Query('language') language = 'en',
   ) {
     return this.subtitleService.getYoutubeSubtitles(videoId, language);
