@@ -13,6 +13,7 @@ import { VideoVariant } from './video-variant.model';
 import { SubtitleService } from 'src/subtitle/subtitle.service';
 import { Sequelize } from 'sequelize';
 import { CreateSubtitleDto } from '../subtitle/dto/create-subtitle.dto';
+import * as process from 'node:process';
 
 @Injectable()
 export class FilmService {
