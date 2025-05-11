@@ -5,7 +5,7 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { Film } from '../films/films.model'; // импортируйте вашу модель Film
+import { Film } from '../films/films.model';
 
 @Table({ tableName: 'subtitles' })
 export class Subtitle extends Model<Subtitle> {
@@ -32,5 +32,9 @@ export class Subtitle extends Model<Subtitle> {
   text: string;
 
   @Column({ type: DataType.JSONB, allowNull: true })
-  phrases: { original: string; translate: string }[];
+  phrases: {
+    original: string;
+    translate: string;
+    type: string;
+  }[];
 }

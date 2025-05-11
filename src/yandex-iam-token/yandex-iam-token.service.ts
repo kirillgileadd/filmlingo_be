@@ -36,8 +36,6 @@ export class YandexIamTokenService implements OnModuleInit {
         yandexPassportOauthToken: yandexOauthToken,
       });
 
-      console.log(response, 'response');
-
       this.iamToken = response.data.iamToken;
       // Устанавливаем время истечения токена с запасом
       const expiresIn = response.data.expiresAt;

@@ -90,7 +90,6 @@ export class FilmController {
   })
   async createFilm(@Body() createFilmDto: CreateFilmDto) {
     console.log(createFilmDto, 'createFilmDto');
-
     const videoBuffer = createFilmDto.video.buffer;
     const posterBuffer = createFilmDto.poster.buffer;
     const bigPosterBuffer = createFilmDto.big_poster.buffer;

@@ -53,7 +53,8 @@ export class SubtitleService {
   /**
    * Сохраняет субтитры в базу данных.
    * @param buffer - Буфер файла субтитров
-   * @param videoId - Идентификатор видео
+   * @param language - Буфер файла субтитров
+   * @param filmId - Идентификатор видео
    * @param transaction - (Необязательно) Транзакция Sequelize
    */
   async saveSubtitles(
@@ -65,7 +66,15 @@ export class SubtitleService {
     try {
       const subtitles = await this.subtitleProcessor.parse(buffer);
 
-      const subtitleInstances = subtitles.map((sub) => ({
+      const subtitlesWithPhrases =
+        // language === 'en'
+        false
+          ? await this.subtitleProcessor.extractPhrasesFromSubtitles(subtitles)
+          : subtitles;
+
+      console.log(subtitles, 'subtitlesWithPhrases');
+
+      const subtitleInstances = subtitlesWithPhrases.map((sub) => ({
         filmId,
         startTime: sub.startTime,
         endTime: sub.endTime,

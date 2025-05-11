@@ -99,7 +99,6 @@ export class WordsService {
   }
 
   async findRandomWords(userId: number, count: number = 20) {
-    console.log(userId, 'userIdasdad');
     const userWords = await this.userWordModel.findAll({
       where: { userId: userId },
       attributes: ['id', 'phrase', 'createdAt'],
