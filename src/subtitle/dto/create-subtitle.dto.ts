@@ -1,10 +1,20 @@
 import { IsNotEmpty, IsString } from 'class-validator';
+import { MemoryStoredFile } from 'nestjs-form-data';
 
 export class CreateSubtitleDto {
   @IsNotEmpty()
-  buffer: Buffer; // Путь к файлу субтитров
+  file: MemoryStoredFile;
 
   @IsString()
   @IsNotEmpty()
-  language: string; // Язык субтитров
+  language: string;
+}
+
+export class SubtitleDto {
+  @IsNotEmpty()
+  buffer: Buffer;
+
+  @IsString()
+  @IsNotEmpty()
+  language: string;
 }

@@ -159,18 +159,16 @@ export class AuthService {
           user.email,
           `${process.env.APP_URL}/reset-password/${forgotPasswordLink}`,
         );
+
+        await user.update({ forgotPasswordLink });
+
+        return HttpStatus.OK;
       } catch (e) {
         throw new HttpException(
           'Проблема с отправкой письма',
           HttpStatus.NOT_FOUND,
         );
       }
-
-      await user.update({ forgotPasswordLink });
-
-      return plainToInstance(UserDto, user, {
-        excludeExtraneousValues: true,
-      });
     }
 
     throw new HttpException(

@@ -29,7 +29,9 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
   imports: [
     NestjsFormDataModule,
     ConfigModule.forRoot({
-      envFilePath: `.${process.env.NODE_ENV}.env`,
+      envFilePath: process.env.NODE_ENV
+        ? `.${process.env.NODE_ENV}.env`
+        : '.development.env',
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
@@ -62,8 +64,5 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
   ],
 })
 export class AppModule {
-  constructor() {
-    console.log(process.env.POSTGRES_PASSWORD);
-    console.log(process.env);
-  }
+  constructor() {}
 }

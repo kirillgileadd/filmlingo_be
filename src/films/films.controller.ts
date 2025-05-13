@@ -18,10 +18,8 @@ import {
 import { FilmService } from './films.service';
 import { CreateFilmDto } from './dto/create-film.dto';
 import { Film } from './films.model';
-import { extname } from 'path';
 import { Roles } from 'src/auth/roles-auth.decorator';
 import { RolesGuard } from 'src/auth/role.guard';
-import { CreateSubtitleDto } from '../subtitle/dto/create-subtitle.dto';
 import { FormDataRequest } from 'nestjs-form-data';
 
 @ApiTags('Films')
@@ -90,47 +88,11 @@ export class FilmController {
   })
   async createFilm(@Body() createFilmDto: CreateFilmDto) {
     console.log(createFilmDto, 'createFilmDto');
-    const videoBuffer = createFilmDto.video.buffer;
-    const posterBuffer = createFilmDto.poster.buffer;
-    const bigPosterBuffer = createFilmDto.big_poster.buffer;
-
-    const titleImageBuffer = createFilmDto.title_image.buffer;
-
-    const filename = createFilmDto.video.originalName;
-
-    const posterExtension = extname(
-      createFilmDto.poster.originalName,
-    ).toLowerCase();
-    const bigPosterExtension = extname(
-      createFilmDto.big_poster.originalName,
-    ).toLowerCase();
-    const titleImageExtension = extname(
-      createFilmDto.title_image.originalName,
-    ).toLowerCase();
-
-    const subtitles: CreateSubtitleDto[] = createFilmDto.subtitles.map(
-      (subtitle, index) => ({
-        buffer: createFilmDto.subtitlesFiles[index].buffer,
-        language: subtitle.language,
-      }),
-    );
-
     createFilmDto.kinopoisk_rating = Number(createFilmDto.kinopoisk_rating);
     createFilmDto.imdb_rating = Number(createFilmDto.imdb_rating);
     createFilmDto.year = Number(createFilmDto.year);
 
-    return this.filmService.createFilm(
-      createFilmDto,
-      videoBuffer,
-      posterBuffer,
-      bigPosterBuffer,
-      titleImageBuffer,
-      filename,
-      posterExtension,
-      bigPosterExtension,
-      titleImageExtension,
-      subtitles,
-    );
+    return this.filmService.createFilm(createFilmDto);
   }
 
   @Get()

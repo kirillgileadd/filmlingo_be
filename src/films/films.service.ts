@@ -12,7 +12,6 @@ import { Film } from './films.model';
 import { VideoVariant } from './video-variant.model';
 import { SubtitleService } from 'src/subtitle/subtitle.service';
 import { Sequelize } from 'sequelize';
-import { CreateSubtitleDto } from '../subtitle/dto/create-subtitle.dto';
 
 @Injectable()
 export class FilmService {
@@ -28,44 +27,23 @@ export class FilmService {
     @Inject('Sequelize') private readonly sequelize: Sequelize,
   ) {}
 
-  async createFilm(
-    createFilmDto: CreateFilmDto,
-    videoBuffer: Buffer,
-    posterBuffer: Buffer,
-    bigPosterBuffer: Buffer,
-    titleImageBuffer: Buffer,
-    filename: string,
-    posterExtension: string,
-    bigPosterExtension: string,
-    titleImageExtension: string,
-    subtitleFiles: CreateSubtitleDto[],
-  ): Promise<Film> {
+  async createFilm(createFilmDto: CreateFilmDto): Promise<Film> {
     const transaction = await this.sequelize.transaction();
 
     try {
       const posterPath = await this.fileService.savePoster(
-        posterBuffer,
-        filename,
-        posterExtension,
-        'poster',
+        createFilmDto.poster,
       );
       const bigPosterPath = await this.fileService.savePoster(
-        bigPosterBuffer,
-        filename,
-        bigPosterExtension,
-        'bigPoster',
+        createFilmDto.big_poster,
       );
       const titleImagePath = await this.fileService.savePoster(
-        titleImageBuffer,
-        filename,
-        titleImageExtension,
-        'titleImage',
+        createFilmDto.title_image,
       );
 
       // Сохраняем видео и получаем пути к M3U8
-      const m3u8Paths = await this.fileService.processAndSaveVideo(
-        videoBuffer,
-        filename,
+      const m3u8Paths = await this.fileService.processAndSegmentVideos(
+        createFilmDto.videos,
       );
 
       // Создаем запись о фильме в базе данных
@@ -85,19 +63,19 @@ export class FilmService {
       );
 
       // Сохраняем пути к видео в отдельной таблице
-      const videoVariants = m3u8Paths.map((path, index) => ({
+      const videoVariants = m3u8Paths.map((variant) => ({
         filmId: film.id,
-        resolution: ['1080p', '720p', '480p'][index], // Или используйте ваш собственный массив разрешений
-        videoPath: path,
+        resolution: variant.variant,
+        videoPath: variant.path,
       }));
 
       await this.videoVariantModel.bulkCreate(videoVariants, { transaction }); // Сохраняем все варианты сразу
 
       try {
         await Promise.all(
-          subtitleFiles.map(async (dto) => {
+          createFilmDto.subtitles.map(async (dto) => {
             await this.subtitleServie.saveSubtitles(
-              dto.buffer,
+              dto.file.buffer,
               dto.language,
               film.id,
               transaction,
@@ -123,6 +101,7 @@ export class FilmService {
     return this.filmModel.findAll();
   }
 
+  //TO DO избежать SQL инекции
   async getFilmById(id: number): Promise<Film> {
     return this.filmModel.findByPk(id, {
       include: [

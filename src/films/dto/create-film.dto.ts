@@ -3,15 +3,22 @@ import { Type } from 'class-transformer';
 import {
   HasMimeType,
   IsFile,
-  IsFiles,
   MaxFileSize,
   MemoryStoredFile,
 } from 'nestjs-form-data';
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateSubtitleDto } from '../../subtitle/dto/create-subtitle.dto';
 
-export class SubtitleDto {
+export class CreateFilmVideosDto {
+  @IsNotEmpty()
+  @IsFile()
+  @HasMimeType(['video/mp4', 'video/webm'])
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  file: MemoryStoredFile;
+
   @IsString()
-  language: string;
+  @IsNotEmpty()
+  variant: '480p' | '720p' | '1080p';
 }
 
 export class CreateFilmDto {
@@ -34,11 +41,11 @@ export class CreateFilmDto {
   @IsString()
   category: string;
 
-  @IsFile()
-  @MaxFileSize(2000e6) // Максимальный размер файла 10MB (например)
-  @HasMimeType(['video/mp4', 'video/webm']) // MIME-типы для видео
-  @ApiProperty({ type: 'string', format: 'binary', required: false })
-  video?: MemoryStoredFile;
+  @ApiProperty({ type: [CreateFilmVideosDto] })
+  @IsArray()
+  @ValidateNested()
+  @Type(() => CreateFilmVideosDto)
+  videos: CreateFilmVideosDto[];
 
   @IsFile()
   @MaxFileSize(5e6) // Ограничение на размер файла, например 1MB для poster
@@ -58,14 +65,9 @@ export class CreateFilmDto {
   @ApiProperty({ type: 'string', format: 'binary', required: false })
   title_image?: MemoryStoredFile;
 
-  @IsFiles({ each: true })
-  // @MaxFileSize(10e6) // Ограничение на размер субтитров (например, 5MB)
-  // @HasMimeType(['application/x-subrip', 'text/srt'])
-  @ApiProperty({ type: 'string', format: 'binary', required: false })
-  subtitlesFiles?: MemoryStoredFile[];
-
+  @ApiProperty({ type: [CreateSubtitleDto] })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SubtitleDto)
-  subtitles: SubtitleDto[];
+  @Type(() => CreateSubtitleDto)
+  subtitles: CreateSubtitleDto[];
 }
