@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { phraseDictionary } from './phraseDictionary';
 
-// import axios from 'axios';
 import { InjectModel } from '@nestjs/sequelize';
 import { Phrase } from '../phrases/phrase.model';
 import { SubtitlePhrases } from './subtitle-phrases.model';
@@ -21,8 +19,6 @@ export interface SubtitleEntry {
 
 @Injectable()
 export class SubtitleProcessor {
-  private phraseDictionary: Record<string, string> = phraseDictionary;
-
   constructor(
     @InjectModel(Phrase) private phraseModel: typeof Phrase,
     @InjectModel(SubtitlePhrases)
@@ -37,9 +33,7 @@ export class SubtitleProcessor {
     const chunks = this.chunkSubtitles(subtitles, chunkSize);
 
     for (const chunk of chunks) {
-      console.log(chunk, 'chunkk');
       const gptResponse = await this.analyzeChunk(chunk);
-      console.log(gptResponse, 'gptResponse');
       await this.saveResults(chunk, gptResponse, transaction);
     }
   }
@@ -74,8 +68,6 @@ export class SubtitleProcessor {
           },
         },
       );
-
-      console.log(response, 'res_analyze_chunk');
 
       const content = response.data.choices?.[0]?.message?.content;
       // const content = JSON.stringify([
@@ -129,15 +121,10 @@ export class SubtitleProcessor {
         })),
       ];
 
-      console.log(allPhrases, 'allPhrasess');
-
       for (const phraseData of allPhrases) {
         let phrase = await this.phraseModel.findOne({
           where: { original: phraseData.original },
         });
-
-        console.log(phrase, 'phraseeses');
-        console.log(phraseData, 'phraseDataa');
 
         if (!phrase) {
           phrase = await this.phraseModel.create(
@@ -147,8 +134,6 @@ export class SubtitleProcessor {
               type: 'idiom' | 'phrasal_verb';
             },
           );
-
-          console.log(phrase, 'phraseeses');
         }
 
         await this.subtitlePhrasesModel.findOrCreate({
@@ -186,23 +171,6 @@ export class SubtitleProcessor {
 [
 ${subtitleTexts}
 ]`;
-  }
-
-  public extractPhrases(
-    text: string,
-  ): { original: string; translate: string }[] {
-    const foundPhrases: { original: string; translate: string }[] = [];
-
-    for (const phrase in this.phraseDictionary) {
-      if (text.includes(phrase)) {
-        foundPhrases.push({
-          original: phrase,
-          translate: this.phraseDictionary[phrase],
-        });
-      }
-    }
-
-    return foundPhrases;
   }
 
   /**

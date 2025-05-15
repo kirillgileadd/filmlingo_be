@@ -1,10 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Subtitle } from './subtitle.model'; // Импортируйте модель субтитров
-import { CreateSubtitleDto } from './dto/create-subtitle.dto'; // Импортируйте DTO для создания субтитра
+import { Subtitle } from './subtitle.model';
+import { CreateSubtitleDto } from './dto/create-subtitle.dto';
 import { Transaction } from 'sequelize';
 import { InjectModel } from '@nestjs/sequelize';
 import { SubtitleProcessor } from './subtitle.processor';
 import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
+import { Phrase } from '../phrases/phrase.model';
 
 @Injectable()
 export class SubtitleService {
@@ -21,9 +22,27 @@ export class SubtitleService {
 
   async getSubtitlesByFilmId(
     filmId: number,
-    language?: string,
+    language: string,
   ): Promise<Subtitle[]> {
-    return this.subtitleModel.findAll({ where: { filmId, language } });
+    const subtitles = await this.subtitleModel.findAll({
+      where: { filmId, ...(language ? { language } : {}) },
+      include: [
+        {
+          model: Phrase,
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    return subtitles.map((subtitle) => {
+      const plain = subtitle.get({ plain: true }) as Subtitle & {
+        phrases: Phrase[] | null;
+      };
+      if (!plain.phrases || plain.phrases.length === 0) {
+        plain.phrases = null;
+      }
+      return plain;
+    });
   }
 
   async getYoutubeSubtitles(videoId: string, language: string) {
@@ -36,7 +55,7 @@ export class SubtitleService {
         language: language,
         startSeconds: sub.start,
         text: sub.text,
-        phrases: this.subtitleProcessor.extractPhrases(sub.text),
+        phrases: null,
         startTime: 0,
         endTime: 0,
         endSeconds: sub.start + sub.dur,
@@ -82,10 +101,14 @@ export class SubtitleService {
           transaction,
         },
       );
-      await this.subtitleProcessor.extractPhrasesFromSubtitles(
-        _subtitles,
-        transaction,
-      );
+
+      //TODO
+      if (language === 'en') {
+        await this.subtitleProcessor.extractPhrasesFromSubtitles(
+          _subtitles,
+          transaction,
+        );
+      }
     } catch (error) {
       console.error('Error saving subtitles:', error);
       throw new InternalServerErrorException('Failed to save subtitles');

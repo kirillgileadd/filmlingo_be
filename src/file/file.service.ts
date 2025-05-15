@@ -80,7 +80,7 @@ export class FileService {
           .outputOptions([
             '-c copy',
             '-f hls',
-            '-hls_time 6',
+            '-hls_time 10',
             '-hls_list_size 0',
             `-hls_segment_filename ${path.join(videoDir, 'segment_%03d.ts')}`,
           ])

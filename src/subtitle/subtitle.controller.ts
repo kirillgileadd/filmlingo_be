@@ -30,7 +30,7 @@ export class SubtitleController {
   @Get()
   async getSubtitles(
     @Query('filmId') filmId: number,
-    @Query('language') language?: string,
+    @Query('language') language = 'en',
   ): Promise<Subtitle[]> {
     return this.subtitleService.getSubtitlesByFilmId(filmId, language);
   }

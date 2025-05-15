@@ -101,34 +101,35 @@ export class FilmService {
     return this.filmModel.findAll();
   }
 
-  //TO DO избежать SQL инекции
   async getFilmById(id: number): Promise<Film> {
-    return this.filmModel.findByPk(id, {
+    const film = await this.filmModel.findByPk(id, {
       include: [
         this.videoVariantModel,
         {
           model: this.subtitleModel,
           required: false,
-          attributes: [
-            'id',
-            'language',
-            'startTime',
-            'endTime',
-            [
-              Sequelize.literal(`
-              (SELECT DISTINCT ON (sub.language) sub.id
-               FROM subtitles AS sub
-               WHERE sub."filmId" = ${id}
-               AND sub.language = subtitles.language
-               ORDER BY sub.language, sub.id ASC
-              )
-            `),
-              'id',
-            ],
-          ],
+          attributes: ['language', 'filmId'],
         },
       ],
     });
+
+    if (!film) return null;
+
+    const uniqueLanguageSubtitles: Subtitle[] = [];
+
+    const seenLanguages = new Set<string>();
+
+    for (const subtitle of film.subtitles) {
+      if (!seenLanguages.has(subtitle.language)) {
+        uniqueLanguageSubtitles.push(subtitle);
+        seenLanguages.add(subtitle.language);
+      }
+    }
+
+    const filmPlain = film.get({ plain: true });
+    filmPlain.subtitles = uniqueLanguageSubtitles;
+
+    return filmPlain;
   }
 
   async deleteFilm(id: number): Promise<void> {

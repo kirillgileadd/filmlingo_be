@@ -9,12 +9,3 @@ export class CreateSubtitleDto {
   @IsNotEmpty()
   language: string;
 }
-
-export class SubtitleDto {
-  @IsNotEmpty()
-  buffer: Buffer;
-
-  @IsString()
-  @IsNotEmpty()
-  language: string;
-}
