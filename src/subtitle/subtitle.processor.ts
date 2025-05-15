@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { phraseDictionary } from './phraseDictionary';
 
+// import axios from 'axios';
+import { InjectModel } from '@nestjs/sequelize';
+import { Phrase } from '../phrases/phrase.model';
+import { SubtitlePhrases } from './subtitle-phrases.model';
+import { Subtitle } from './subtitle.model';
+import { Transaction } from 'sequelize';
 import axios from 'axios';
 
 export interface SubtitleEntry {
@@ -17,34 +23,36 @@ export interface SubtitleEntry {
 export class SubtitleProcessor {
   private phraseDictionary: Record<string, string> = phraseDictionary;
 
+  constructor(
+    @InjectModel(Phrase) private phraseModel: typeof Phrase,
+    @InjectModel(SubtitlePhrases)
+    private subtitlePhrasesModel: typeof SubtitlePhrases,
+  ) {}
+
   async extractPhrasesFromSubtitles(
-    subtitles: SubtitleEntry[],
-  ): Promise<SubtitleEntry[]> {
+    subtitles: Subtitle[],
+    transaction?: Transaction,
+  ): Promise<void> {
     const chunkSize = 120;
     const chunks = this.chunkSubtitles(subtitles, chunkSize);
-    const results: SubtitleEntry[] = [];
 
     for (const chunk of chunks) {
+      console.log(chunk, 'chunkk');
       const gptResponse = await this.analyzeChunk(chunk);
-      const updated = this.applyResults(chunk, gptResponse);
-      results.push(...updated);
+      console.log(gptResponse, 'gptResponse');
+      await this.saveResults(chunk, gptResponse, transaction);
     }
-
-    return results;
   }
 
-  private chunkSubtitles(
-    subtitles: SubtitleEntry[],
-    size: number,
-  ): SubtitleEntry[][] {
-    const chunks: SubtitleEntry[][] = [];
+  private chunkSubtitles(subtitles: Subtitle[], size: number): Subtitle[][] {
+    const chunks: Subtitle[][] = [];
     for (let i = 0; i < subtitles.length; i += size) {
       chunks.push(subtitles.slice(i, i + size));
     }
     return chunks;
   }
 
-  private async analyzeChunk(chunk: SubtitleEntry[]): Promise<any[]> {
+  private async analyzeChunk(chunk: Subtitle[]): Promise<any[]> {
     const prompt = this.buildPrompt(chunk);
 
     try {
@@ -70,6 +78,16 @@ export class SubtitleProcessor {
       console.log(response, 'res_analyze_chunk');
 
       const content = response.data.choices?.[0]?.message?.content;
+      // const content = JSON.stringify([
+      //   {
+      //     text: 'She told me I had a purpose.',
+      //     phrasal_verbs: [
+      //       { phrase: 'pick up', translate: 'подобрать, забрать' },
+      //     ],
+      //     idioms: [{ phrase: 'hit the sack', translate: 'завалиться спать' }],
+      //   },
+      // ]);
+
       return JSON.parse(content || '[]');
     } catch (err) {
       console.error('ProxyAPI GPT request failed:', err);
@@ -77,17 +95,16 @@ export class SubtitleProcessor {
     }
   }
 
-  private applyResults(
-    originalChunk: SubtitleEntry[],
+  private async saveResults(
+    originalChunk: Subtitle[],
     gptResults: any[],
-  ): SubtitleEntry[] {
+    transaction?: Transaction,
+  ): Promise<void> {
     const resultMap = new Map<
       string,
-      {
-        phrasal_verbs: { phrase: string; translate: string }[];
-        idioms: { phrase: string; translate: string }[];
-      }
+      { phrasal_verbs: any[]; idioms: any[] }
     >();
+
     for (const entry of gptResults) {
       resultMap.set(entry.text, {
         phrasal_verbs: entry.phrasal_verbs || [],
@@ -95,28 +112,54 @@ export class SubtitleProcessor {
       });
     }
 
-    return originalChunk.map((sub) => {
+    for (const sub of originalChunk) {
       const result = resultMap.get(sub.text);
-      if (!result) return { ...sub, phrases: [] };
+      if (!result) continue;
 
-      const phrases = [
-        ...result.phrasal_verbs.map((pv) => ({
-          original: pv.phrase,
+      const allPhrases = [
+        ...result.phrasal_verbs.map((p) => ({
+          original: p.phrase,
+          translation: p.translate,
           type: 'phrasal_verb',
-          translate: pv.translate,
         })),
-        ...result.idioms.map((id) => ({
-          original: id.phrase,
+        ...result.idioms.map((p) => ({
+          original: p.phrase,
+          translation: p.translate,
           type: 'idiom',
-          translate: id.translate,
         })),
       ];
 
-      return { ...sub, phrases };
-    });
+      console.log(allPhrases, 'allPhrasess');
+
+      for (const phraseData of allPhrases) {
+        let phrase = await this.phraseModel.findOne({
+          where: { original: phraseData.original },
+        });
+
+        console.log(phrase, 'phraseeses');
+        console.log(phraseData, 'phraseDataa');
+
+        if (!phrase) {
+          phrase = await this.phraseModel.create(
+            phraseData as {
+              original: string;
+              translation: string;
+              type: 'idiom' | 'phrasal_verb';
+            },
+          );
+
+          console.log(phrase, 'phraseeses');
+        }
+
+        await this.subtitlePhrasesModel.findOrCreate({
+          where: { subtitleId: Number(sub.id), phraseId: phrase.id },
+          transaction,
+        });
+      }
+    }
   }
 
-  private buildPrompt(chunk: SubtitleEntry[]): string {
+  private buildPrompt(chunk: Subtitle[]): string {
     const subtitleTexts = chunk
       .map((s) => `  { "text": "${s.text.replace(/"/g, '\\"')}" }`)
       .join(',\n');

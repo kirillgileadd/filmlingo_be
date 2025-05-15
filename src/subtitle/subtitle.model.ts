@@ -1,4 +1,5 @@
 import {
+  BelongsToMany,
   Column,
   DataType,
   ForeignKey,
@@ -6,6 +7,8 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { Film } from '../films/films.model';
+import { Phrase } from '../phrases/phrase.model';
+import { SubtitlePhrases } from './subtitle-phrases.model';
 
 @Table({ tableName: 'subtitles' })
 export class Subtitle extends Model<Subtitle> {
@@ -31,10 +34,13 @@ export class Subtitle extends Model<Subtitle> {
   @Column({ type: DataType.TEXT, allowNull: false })
   text: string;
 
-  @Column({ type: DataType.JSONB, allowNull: true })
-  phrases: {
-    original: string;
-    translate: string;
-    type: string;
-  }[];
+  // @Column({ type: DataType.JSONB, allowNull: true })
+  // phrases: {
+  //   original: string;
+  //   translate: string;
+  //   type: string;
+  // }[];
+
+  @BelongsToMany(() => Phrase, () => SubtitlePhrases)
+  phrases: Phrase[];
 }

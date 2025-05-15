@@ -66,15 +66,7 @@ export class SubtitleService {
     try {
       const subtitles = await this.subtitleProcessor.parse(buffer);
 
-      const subtitlesWithPhrases =
-        // language === 'en'
-        false
-          ? await this.subtitleProcessor.extractPhrasesFromSubtitles(subtitles)
-          : subtitles;
-
-      console.log(subtitles, 'subtitlesWithPhrases');
-
-      const subtitleInstances = subtitlesWithPhrases.map((sub) => ({
+      const subtitleInstances = subtitles.map((sub) => ({
         filmId,
         startTime: sub.startTime,
         endTime: sub.endTime,
@@ -82,10 +74,18 @@ export class SubtitleService {
         startSeconds: sub.startSeconds,
         endSeconds: sub.endSeconds,
         text: sub.text,
-        phrases: sub.phrases,
       }));
 
-      await this.subtitleModel.bulkCreate(subtitleInstances, { transaction });
+      const _subtitles = await this.subtitleModel.bulkCreate(
+        subtitleInstances,
+        {
+          transaction,
+        },
+      );
+      await this.subtitleProcessor.extractPhrasesFromSubtitles(
+        _subtitles,
+        transaction,
+      );
     } catch (error) {
       console.error('Error saving subtitles:', error);
       throw new InternalServerErrorException('Failed to save subtitles');

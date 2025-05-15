@@ -1,4 +1,10 @@
-import { IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   HasMimeType,
@@ -18,6 +24,9 @@ export class CreateFilmVideosDto {
 
   @IsString()
   @IsNotEmpty()
+  @IsIn(['480p', '720p', '1080p'], {
+    message: 'не соответствует 480p, 720p, или 1080p',
+  })
   variant: '480p' | '720p' | '1080p';
 }
 

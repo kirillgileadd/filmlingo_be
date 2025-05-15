@@ -22,6 +22,11 @@ import { WordsModule } from './words/words.module';
 import { Word } from './words/word.model';
 import { UserWords } from './words/user-words.model';
 import { NestjsFormDataModule } from 'nestjs-form-data';
+import { PhrasesModule } from './phrases/phrases.module';
+import { Phrase } from './phrases/phrase.model';
+import { UserPhrases } from './phrases/user-phrases.model';
+import { SubtitlePhrases } from './subtitle/subtitle-phrases.model';
+import { Subtitle } from './subtitle/subtitle.model';
 
 @Module({
   controllers: [],
@@ -38,7 +43,18 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
       serveRoot: '/uploads/',
     }),
     SequelizeModule.forRoot({
-      models: [Role, UserRoles, Token, User, Word, UserWords],
+      models: [
+        Role,
+        UserRoles,
+        Token,
+        User,
+        Word,
+        UserWords,
+        Subtitle,
+        Phrase,
+        UserPhrases,
+        SubtitlePhrases,
+      ],
       dialect: 'postgres',
       autoLoadModels: true,
       host: process.env.POSTGRES_HOST,
@@ -48,7 +64,6 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
       password: process.env.POSTGRES_PASSWORD,
       logging: true,
     }),
-    WordsModule,
     YandexIamTokenModule,
     TranslateModule,
     AuthModule,
@@ -61,6 +76,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     FilmsModule,
     SubtitleModule,
     WordsModule,
+    PhrasesModule,
   ],
 })
 export class AppModule {
