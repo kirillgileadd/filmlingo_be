@@ -98,7 +98,9 @@ export class FilmService {
   }
 
   async getAllFilms(): Promise<Film[]> {
-    return this.filmModel.findAll();
+    return this.filmModel.findAll({
+      order: [['createdAt', 'DESC']],
+    });
   }
 
   async getFilmById(id: number): Promise<Film> {

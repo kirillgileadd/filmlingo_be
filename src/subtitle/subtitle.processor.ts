@@ -146,7 +146,7 @@ export class SubtitleProcessor {
 
   private buildPrompt(chunk: Subtitle[]): string {
     const subtitleTexts = chunk
-      .map((s) => `  { "text": "${s.text.replace(/"/g, '\\"')}" }`)
+      .map((s) => `  { "text": ${JSON.stringify(s.text)} }`)
       .join(',\n');
 
     return `Ты — эксперт по английскому языку и русскому переводу. Вот массив субтитров фильма. Для каждого текста:
