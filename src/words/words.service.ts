@@ -30,7 +30,7 @@ export class WordsService {
 
     const baseWords = await this.userWordModel.findAndCountAll({
       where: { userId: userId },
-      attributes: ['id', 'phrase', 'createdAt'],
+      attributes: ['id', 'sourceContext', 'createdAt'],
       include: [
         {
           model: this.wordModel,
@@ -48,7 +48,7 @@ export class WordsService {
       original: userWord.word.original,
       translation: userWord.word.translation,
       creationAt: userWord.createdAt,
-      phrase: userWord.phrase,
+      sourceContext: userWord.sourceContext,
     }));
 
     return {
@@ -60,7 +60,7 @@ export class WordsService {
   }
 
   async addWord(userId: number, createWordDto: CreateWordDto) {
-    const { original, translation, phrase } = createWordDto;
+    const { original, translation, sourceContext } = createWordDto;
 
     let word = await this.wordModel.findOne({
       where: { original, translation },
@@ -75,9 +75,13 @@ export class WordsService {
     });
 
     if (!userWord) {
-      await this.userWordModel.create({ userId, wordId: word.id, phrase });
-    } else if (phrase) {
-      userWord.phrase = phrase;
+      await this.userWordModel.create({
+        userId,
+        wordId: word.id,
+        sourceContext,
+      });
+    } else if (sourceContext) {
+      userWord.sourceContext = sourceContext;
       await userWord.save();
     }
 
@@ -100,7 +104,7 @@ export class WordsService {
   async findRandomWords(userId: number, count: number = 20) {
     const userWords = await this.userWordModel.findAll({
       where: { userId: userId },
-      attributes: ['id', 'phrase', 'createdAt'],
+      attributes: ['id', 'sourceContext', 'createdAt'],
       include: [
         {
           model: this.wordModel,
@@ -123,7 +127,7 @@ export class WordsService {
       original: userWord.word.original,
       translation: userWord.word.translation,
       creationAt: userWord.createdAt,
-      phrase: userWord.phrase,
+      sourceContext: userWord.sourceContext,
     }));
 
     return {

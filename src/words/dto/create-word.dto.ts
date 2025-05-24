@@ -13,11 +13,11 @@ export class CreateWordDto {
   translation!: string;
 
   @ApiProperty({
-    description: 'Фраза, из которой добавлено слово',
+    description: 'Контекст, из которого добавлено слово',
     example: 'Hello, how are you?',
     required: false,
   })
   @IsOptional()
   @IsString({ message: 'Должно быть строкой' })
-  phrase?: string;
+  sourceContext?: string;
 }

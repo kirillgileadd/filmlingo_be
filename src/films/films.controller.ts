@@ -20,7 +20,7 @@ import { CreateFilmDto } from './dto/create-film.dto';
 import { Film } from './films.model';
 import { Roles } from 'src/auth/roles-auth.decorator';
 import { RolesGuard } from 'src/auth/role.guard';
-import { FormDataRequest } from 'nestjs-form-data';
+import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 
 @ApiTags('Films')
 @Controller('films')
@@ -30,7 +30,7 @@ export class FilmController {
   @Roles('ADMIN')
   @UseGuards(RolesGuard)
   @Post('create')
-  @FormDataRequest()
+  @FormDataRequest({ storage: FileSystemStoredFile })
   @ApiOperation({ summary: 'Создать новую запись фильма с видео и постером' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

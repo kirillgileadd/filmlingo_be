@@ -31,7 +31,7 @@ export class PhrasesService {
 
     const basePhrases = await this.userPhraseModel.findAndCountAll({
       where: { userId: userId },
-      attributes: ['id', 'createdAt'],
+      attributes: ['id', 'createdAt', 'sourceContext'],
       include: [
         {
           model: this.phraseModel,
@@ -50,6 +50,7 @@ export class PhrasesService {
       translation: userPhrase.phrase.translation,
       creationAt: userPhrase.createdAt,
       type: userPhrase.phrase.type,
+      sourceContext: userPhrase.sourceContext,
     }));
 
     return {
@@ -61,7 +62,7 @@ export class PhrasesService {
   }
 
   async addPhrase(userId: number, createPhraseDto: CreatePhraseDto) {
-    const { original, translation, type } = createPhraseDto;
+    const { original, translation, type, sourceContext } = createPhraseDto;
 
     let phrase = await this.phraseModel.findOne({
       where: { original, translation, type },
@@ -79,10 +80,10 @@ export class PhrasesService {
       await this.userPhraseModel.create({
         userId,
         phraseId: phrase.id,
-        phrase,
+        sourceContext,
       });
-    } else if (phrase) {
-      userPhrase.phrase = phrase;
+    } else if (sourceContext) {
+      userPhrase.sourceContext = sourceContext;
       await userPhrase.save();
     }
 
@@ -105,7 +106,7 @@ export class PhrasesService {
   async findRandomPhrases(userId: number, count: number = 20) {
     const userPhrases = await this.userPhraseModel.findAll({
       where: { userId: userId },
-      attributes: ['id', 'createdAt'],
+      attributes: ['id', 'sourceContext', 'createdAt'],
       include: [
         {
           model: this.phraseModel,
@@ -129,6 +130,7 @@ export class PhrasesService {
       translation: userPhrase.phrase.translation,
       creationAt: userPhrase.createdAt,
       type: userPhrase.phrase.type,
+      sourceContext: userPhrase.sourceContext,
     }));
 
     return {

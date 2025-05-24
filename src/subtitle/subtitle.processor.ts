@@ -47,38 +47,38 @@ export class SubtitleProcessor {
   }
 
   private async analyzeChunk(chunk: Subtitle[]): Promise<any[]> {
-    const prompt = this.buildPrompt(chunk);
+    // const prompt = this.buildPrompt(chunk);
 
     try {
-      const response = await axios.post(
-        'https://api.proxyapi.ru/openai/v1/chat/completions',
-        {
-          model: 'gpt-4.1-nano-2025-04-14',
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.3,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.PROXY_API_KEY}`,
-          },
-        },
-      );
-
-      const content = response.data.choices?.[0]?.message?.content;
-      // const content = JSON.stringify([
+      // const response = await axios.post(
+      //   'https://api.proxyapi.ru/openai/v1/chat/completions',
       //   {
-      //     text: 'She told me I had a purpose.',
-      //     phrasal_verbs: [
-      //       { phrase: 'pick up', translate: 'подобрать, забрать' },
+      //     model: 'gpt-4.1-nano-2025-04-14',
+      //     messages: [
+      //       {
+      //         role: 'user',
+      //         content: prompt,
+      //       },
       //     ],
-      //     idioms: [{ phrase: 'hit the sack', translate: 'завалиться спать' }],
+      //     temperature: 0.3,
       //   },
-      // ]);
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${process.env.PROXY_API_KEY}`,
+      //     },
+      //   },
+      // );
+
+      // const content = response.data.choices?.[0]?.message?.content;
+      const content = JSON.stringify([
+        {
+          text: 'She told me I had a purpose.',
+          phrasal_verbs: [
+            { phrase: 'pick up', translate: 'подобрать, забрать' },
+          ],
+          idioms: [{ phrase: 'hit the sack', translate: 'завалиться спать' }],
+        },
+      ]);
 
       return JSON.parse(content || '[]');
     } catch (err) {
@@ -149,23 +149,61 @@ export class SubtitleProcessor {
       .map((s) => `  { "text": ${JSON.stringify(s.text)} }`)
       .join(',\n');
 
-    return `Ты — эксперт по английскому языку и русскому переводу. Вот массив субтитров фильма. Для каждого текста:
-1. Найди фразовые глаголы (например: "pick up", "let down", "run into").
-2. Найди идиомы или устойчивые выражения (например: "a piece of cake", "hit the sack").
-3. Для каждого найденного выражения укажи перевод на русский.
-4. Верни строго валидный JSON-массив вида:
+    return `Ты — опытный лингвист и переводчик с английского на русский. Твоя задача — анализировать массив субтитров фильма и находить фразовые глаголы и идиомы с учётом контекста.
+
+Для каждой строки субтитров:
+1. Проанализируй фразу в контексте — учитывай, что выражения могут быть не в канонической форме (например: "picked it up" вместо "pick up").
+2. Найди фразовые глаголы — даже если они разбиты словами (например: "pick it up").
+3. Найди идиомы и устойчивые выражения — включая разговорные, сленговые, редуцированные формы.
+4. Учитывай многозначность и выбери наиболее подходящий перевод в данном контексте.
+5. Если выражение можно понять только в сочетании с предыдущими строками — включи это в анализ.
+6. Возвращай строго валидный JSON-массив следующего формата:
 [
   {
-    "text": "...",
+    "text": "оригинальный текст субтитра",
     "phrasal_verbs": [
-      { "phrase": "pick up", "translate": "подобрать, забрать" }
+      { "phrase": "выражение", "translate": "перевод" }
     ],
     "idioms": [
-      { "phrase": "hit the sack", "translate": "завалиться спать" }
+      { "phrase": "идиома", "translate": "перевод" }
     ]
   }
 ]
-Если в субтитре ничего не найдено — возвращай пустые массивы.
+Если ничего не найдено — верни пустые массивы "phrasal_verbs": [], "idioms": [].
+
+Примеры выражений, которые нужно находить:
+
+**Фразовые глаголы:**
+- "pick up" → "подобрать, забрать"
+- "run into" → "неожиданно встретить"
+- "get over it" → "пережить, справиться с чем-то"
+- "give up" → "сдаваться"
+- "break down" → "сломаться (техника или человек)"
+- "hold on" → "подожди"
+- "carry on" → "продолжать"
+- "look it up" → "поискать (в словаре, интернете)"
+- "figure out" → "понять, разобраться"
+- "take off" → "взлетать, снимать (одежду)"
+- "turn down" → "отказаться"
+- "bring up" → "упомянуть, поднять тему"
+- "put off" → "откладывать"
+
+**Идиомы и устойчивые выражения:**
+- "a piece of cake" → "очень легко"
+- "hit the sack" → "лечь спать"
+- "break a leg" → "ни пуха ни пера"
+- "under the weather" → "чувствовать себя плохо"
+- "spill the beans" → "выдать секрет"
+- "cost an arm and a leg" → "очень дорого"
+- "cut corners" → "халтурить"
+- "let the cat out of the bag" → "проболтаться"
+- "once in a blue moon" → "раз в сто лет, очень редко"
+- "the ball is in your court" → "теперь всё зависит от тебя"
+- "bite the bullet" → "собраться с духом и сделать неприятное"
+- "hit the nail on the head" → "точно подметить"
+- "go the extra mile" → "сделать сверх ожиданий"
+- "burn the midnight oil" → "работать допоздна"
+- "pull someone's leg" → "подшучивать"
 
 Вот субтитры:
 [

@@ -36,4 +36,11 @@ export class UserPhrases extends Model<UserPhrases> {
 
   @BelongsTo(() => User)
   user: User;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    comment: 'Контекст или место, откуда добавлено слово',
+  })
+  sourceContext: string | null;
 }

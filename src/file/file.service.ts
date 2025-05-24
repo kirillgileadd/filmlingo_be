@@ -8,9 +8,9 @@ import ffmpeg from 'fluent-ffmpeg';
 import { normalizeFilename } from 'src/uitils/normalizeFilename';
 import axios from 'axios';
 import * as path from 'path';
-import fs from 'fs';
+import fs, { copyFileSync, createReadStream } from 'fs';
 import { CreateFilmVideosDto } from '../films/dto/create-film.dto';
-import { MemoryStoredFile } from 'nestjs-form-data';
+import { FileSystemStoredFile } from 'nestjs-form-data';
 
 @Injectable()
 export class FileService {
@@ -26,7 +26,7 @@ export class FileService {
 
   private bucketName = process.env.S3_BUCKET_NAME;
 
-  async savePoster(file: MemoryStoredFile): Promise<string> {
+  async savePoster(file: FileSystemStoredFile): Promise<string> {
     const supportedFormats = ['.jpg', '.jpeg', '.webp', '.png'];
     const extension = path.extname(file.originalName).toLowerCase();
 
@@ -38,13 +38,14 @@ export class FileService {
 
     const normalizedFilename = normalizeFilename(file.originalName);
     const s3Key = `posters/${normalizedFilename}${extension}`;
+    const stream = createReadStream(file.path);
 
     try {
       await this.s3Client.send(
         new PutObjectCommand({
           Bucket: this.bucketName,
           Key: s3Key,
-          Body: file.buffer,
+          Body: stream,
           ContentType: `image/${extension.replace('.', '')}`,
         }),
       );
@@ -73,7 +74,8 @@ export class FileService {
       fs.mkdirSync(videoDir, { recursive: true });
 
       const inputPath = path.join(videoDir, `${sanitizedFilename}.mp4`);
-      fs.writeFileSync(inputPath, file.buffer);
+
+      copyFileSync(file.path, inputPath);
 
       await new Promise<void>((resolve, reject) => {
         ffmpeg(inputPath)

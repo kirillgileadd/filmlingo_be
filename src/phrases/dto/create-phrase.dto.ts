@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePhraseDto {
@@ -23,4 +23,13 @@ export class CreatePhraseDto {
     message: 'Допустимые значения: idiom или phrasal_verb',
   })
   type!: 'idiom' | 'phrasal_verb';
+
+  @ApiProperty({
+    description: 'Контекст, из которого добавлена фраза',
+    example: 'Hello, how are you?',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'Должно быть строкой' })
+  sourceContext?: string;
 }

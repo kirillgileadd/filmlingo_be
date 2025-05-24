@@ -40,7 +40,7 @@ export class UserWords extends Model<UserWords> {
   @Column({
     type: DataType.STRING,
     allowNull: true,
-    comment: 'Фраза, из которой добавлено слово',
+    comment: 'Контекст или место, откуда добавлено слово',
   })
-  phrase: string | null;
+  sourceContext: string | null;
 }

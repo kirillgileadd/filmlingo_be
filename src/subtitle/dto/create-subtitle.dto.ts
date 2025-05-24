@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-import { MemoryStoredFile } from 'nestjs-form-data';
+import { FileSystemStoredFile } from 'nestjs-form-data';
 
 export class CreateSubtitleDto {
   @IsNotEmpty()
-  file: MemoryStoredFile;
+  file: FileSystemStoredFile;
 
   @IsString()
   @IsNotEmpty()

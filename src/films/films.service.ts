@@ -12,6 +12,7 @@ import { Film } from './films.model';
 import { VideoVariant } from './video-variant.model';
 import { SubtitleService } from 'src/subtitle/subtitle.service';
 import { Sequelize } from 'sequelize';
+import { createReadStream } from 'fs';
 
 @Injectable()
 export class FilmService {
@@ -75,7 +76,7 @@ export class FilmService {
         await Promise.all(
           createFilmDto.subtitles.map(async (dto) => {
             await this.subtitleServie.saveSubtitles(
-              dto.file.buffer,
+              dto.file.path,
               dto.language,
               film.id,
               transaction,

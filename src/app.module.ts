@@ -21,7 +21,7 @@ import { YandexIamTokenModule } from './yandex-iam-token/yandex-iam-token.module
 import { WordsModule } from './words/words.module';
 import { Word } from './words/word.model';
 import { UserWords } from './words/user-words.model';
-import { NestjsFormDataModule } from 'nestjs-form-data';
+import { FileSystemStoredFile, NestjsFormDataModule } from 'nestjs-form-data';
 import { PhrasesModule } from './phrases/phrases.module';
 import { Phrase } from './phrases/phrase.model';
 import { UserPhrases } from './phrases/user-phrases.model';
@@ -32,7 +32,13 @@ import { Subtitle } from './subtitle/subtitle.model';
   controllers: [],
   providers: [],
   imports: [
-    NestjsFormDataModule,
+    NestjsFormDataModule.configAsync({
+      useFactory: () => ({
+        storage: FileSystemStoredFile,
+        fileSystemStoragePath: join(__dirname, '..', 'uploads'),
+        autoDeleteFile: true,
+      }),
+    }),
     ConfigModule.forRoot({
       envFilePath: process.env.NODE_ENV
         ? `.${process.env.NODE_ENV}.env`

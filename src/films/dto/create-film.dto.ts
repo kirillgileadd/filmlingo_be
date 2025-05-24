@@ -10,7 +10,7 @@ import {
   HasMimeType,
   IsFile,
   MaxFileSize,
-  MemoryStoredFile,
+  FileSystemStoredFile,
 } from 'nestjs-form-data';
 import { ApiProperty } from '@nestjs/swagger';
 import { CreateSubtitleDto } from '../../subtitle/dto/create-subtitle.dto';
@@ -20,7 +20,7 @@ export class CreateFilmVideosDto {
   @IsFile()
   @HasMimeType(['video/mp4', 'video/webm'])
   @ApiProperty({ type: 'string', format: 'binary', required: false })
-  file: MemoryStoredFile;
+  file: FileSystemStoredFile;
 
   @IsString()
   @IsNotEmpty()
@@ -60,19 +60,19 @@ export class CreateFilmDto {
   @MaxFileSize(5e6) // Ограничение на размер файла, например 1MB для poster
   @HasMimeType(['image/jpeg', 'image/png']) // MIME-типы для изображений
   @ApiProperty({ type: 'string', format: 'binary', required: false })
-  poster?: MemoryStoredFile;
+  poster?: FileSystemStoredFile;
 
   @IsFile()
   @MaxFileSize(10e6) // Ограничение для больших постеров
   @HasMimeType(['image/jpeg', 'image/png'])
   @ApiProperty({ type: 'string', format: 'binary', required: false })
-  big_poster?: MemoryStoredFile;
+  big_poster?: FileSystemStoredFile;
 
   @IsFile()
   @MaxFileSize(5e6) // Ограничение для изображения титульного изображения
   @HasMimeType(['image/jpeg', 'image/png'])
   @ApiProperty({ type: 'string', format: 'binary', required: false })
-  title_image?: MemoryStoredFile;
+  title_image?: FileSystemStoredFile;
 
   @ApiProperty({ type: [CreateSubtitleDto] })
   @IsArray()

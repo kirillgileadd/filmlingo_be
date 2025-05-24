@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { SubtitleProcessor } from './subtitle.processor';
 import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
 import { Phrase } from '../phrases/phrase.model';
+import fs from 'fs';
 
 @Injectable()
 export class SubtitleService {
@@ -77,12 +78,13 @@ export class SubtitleService {
    * @param transaction - (Необязательно) Транзакция Sequelize
    */
   async saveSubtitles(
-    buffer: Buffer,
+    filePath: string,
     language: string,
     filmId: number,
     transaction?: Transaction,
   ): Promise<void> {
     try {
+      const buffer = fs.readFileSync(filePath);
       const subtitles = await this.subtitleProcessor.parse(buffer);
 
       const subtitleInstances = subtitles.map((sub) => ({
