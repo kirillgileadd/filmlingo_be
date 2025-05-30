@@ -32,7 +32,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             docker pull ${{ secrets.DOCKER_USERNAME }}/filmlingo_be:latest
-            cd /path/to/your/project
+            cd filmlingo
             docker compose down
             docker compose up -d
           EOF
