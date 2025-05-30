@@ -56,12 +56,14 @@ services:
 #        condition: service_started
 #
 #  frontend:
-#    build: ../filmlingo-fe
+#    build:
+#      context: ../filmlingo-fe
+#      args:
+#        NEXT_PUBLIC_API_URL: http://localhost:8000
+#        NEXT_PUBLIC_STATIC: http://localhost:9000/filmlingo
 #    restart: always
 #    ports:
 #      - "3000:3000"
-#    env_file:
-#      - ../filmlingo-fe/.env
 #    container_name: filmlingo_fe_test_cont
 
 volumes:

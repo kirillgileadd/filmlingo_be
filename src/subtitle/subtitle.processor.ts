@@ -47,38 +47,38 @@ export class SubtitleProcessor {
   }
 
   private async analyzeChunk(chunk: Subtitle[]): Promise<any[]> {
-    // const prompt = this.buildPrompt(chunk);
+    const prompt = this.buildPrompt(chunk);
 
     try {
-      // const response = await axios.post(
-      //   'https://api.proxyapi.ru/openai/v1/chat/completions',
-      //   {
-      //     model: 'gpt-4.1-nano-2025-04-14',
-      //     messages: [
-      //       {
-      //         role: 'user',
-      //         content: prompt,
-      //       },
-      //     ],
-      //     temperature: 0.3,
-      //   },
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${process.env.PROXY_API_KEY}`,
-      //     },
-      //   },
-      // );
-
-      // const content = response.data.choices?.[0]?.message?.content;
-      const content = JSON.stringify([
+      const response = await axios.post(
+        'https://api.proxyapi.ru/openai/v1/chat/completions',
         {
-          text: 'She told me I had a purpose.',
-          phrasal_verbs: [
-            { phrase: 'pick up', translate: 'подобрать, забрать' },
+          model: 'gpt-4.1-nano-2025-04-14',
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
           ],
-          idioms: [{ phrase: 'hit the sack', translate: 'завалиться спать' }],
+          temperature: 0.3,
         },
-      ]);
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.PROXY_API_KEY}`,
+          },
+        },
+      );
+
+      const content = response.data.choices?.[0]?.message?.content;
+      // const content = JSON.stringify([
+      //   {
+      //     text: 'She told me I had a purpose.',
+      //     phrasal_verbs: [
+      //       { phrase: 'pick up', translate: 'подобрать, забрать' },
+      //     ],
+      //     idioms: [{ phrase: 'hit the sack', translate: 'завалиться спать' }],
+      //   },
+      // ]);
 
       return JSON.parse(content || '[]');
     } catch (err) {
@@ -145,9 +145,8 @@ export class SubtitleProcessor {
   }
 
   private buildPrompt(chunk: Subtitle[]): string {
-    const subtitleTexts = chunk
-      .map((s) => `  { "text": ${JSON.stringify(s.text)} }`)
-      .join(',\n');
+    const subtitleTexts = chunk.map((s) => ({ text: s.text }));
+    const subtitleJSON = JSON.stringify(subtitleTexts, null, 2);
 
     return `Ты — опытный лингвист и переводчик с английского на русский. Твоя задача — анализировать массив субтитров фильма и находить фразовые глаголы и идиомы с учётом контекста.
 
@@ -207,7 +206,7 @@ export class SubtitleProcessor {
 
 Вот субтитры:
 [
-${subtitleTexts}
+${subtitleJSON}
 ]`;
   }
 

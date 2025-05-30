@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { ValidationPipe } from './pipes/validation.pipe';
+import * as process from 'node:process';
 
 async function start() {
   const PORT = process.env.PORT || 8000;
@@ -12,10 +13,9 @@ async function start() {
 
   app.use(cookieParser());
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
-    // origin: '*',
+    origin: [process.env.APP_URL, 'http://localhost:3001'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept, Authorization', // добавляем разрешенные заголовки
+    allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,
   });
 

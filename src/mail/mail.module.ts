@@ -15,7 +15,7 @@ export class MailerConfig implements MailerOptionsFactory {
       transport: {
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT),
-        secure: false,
+        secure: Boolean(process.env.SMTP_SECURE) ?? false,
         auth: {
           user: process.env.SMTP_USERNAME,
           pass: process.env.SMTP_PASSWORD,
