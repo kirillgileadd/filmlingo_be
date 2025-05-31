@@ -1,11 +1,13 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { TokenService } from './token.service';
+import { HttpException } from '@nestjs/common/exceptions/http.exception';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -21,8 +23,8 @@ export class JwtAuthGuard implements CanActivate {
       const token = authHeader?.split(' ')?.[1];
 
       if (bearer !== 'Bearer' || !token) {
-        throw new UnauthorizedException({
-          message: 'Пользователь не авторизован',
+        throw new ForbiddenException({
+          message: 'Access token отсутствует или неверного формата',
         });
       }
 
@@ -35,6 +37,10 @@ export class JwtAuthGuard implements CanActivate {
       req.user = user;
       return true;
     } catch (e) {
+      if (e instanceof HttpException) {
+        throw e;
+      }
+
       throw new UnauthorizedException({
         message: 'Пользователь не авторизован',
       });

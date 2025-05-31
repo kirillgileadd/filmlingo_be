@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -86,6 +87,11 @@ export class AuthController {
   ) {
     try {
       const { refresh_token } = req.cookies;
+
+      if (!refresh_token) {
+        throw new BadRequestException('Refresh token is missing');
+      }
+
       const userData = await this.authService.refresh(refresh_token);
       res.cookie('refresh_token', userData.refreshToken, {
         httpOnly: true,
@@ -93,7 +99,7 @@ export class AuthController {
       });
       return userData;
     } catch (error) {
-      return HttpStatus.BAD_REQUEST;
+      throw new BadRequestException('Invalid refresh token');
     }
   }
 

@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -38,8 +39,8 @@ export class RolesGuard implements CanActivate {
       const token = authHeader?.split(' ')?.[1];
 
       if (bearer !== 'Bearer' || !token) {
-        throw new UnauthorizedException({
-          message: 'Пользователь не авторизован',
+        throw new ForbiddenException({
+          message: 'Access token отсутствует или неверного формата',
         });
       }
 
