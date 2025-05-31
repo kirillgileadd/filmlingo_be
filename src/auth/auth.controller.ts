@@ -57,10 +57,7 @@ export class AuthController {
 
     if (!refresh_token) {
       throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST, // Пустая кука
-          error: 'В куке нет refresh_token',
-        },
+        'В куке нет refresh_token',
         HttpStatus.BAD_REQUEST,
       );
     }

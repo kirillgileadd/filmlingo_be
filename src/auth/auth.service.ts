@@ -16,6 +16,7 @@ import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { User } from 'src/users/users.model';
 import { plainToInstance } from 'class-transformer';
 import { RegistrationUserDto } from './dto/registration-user.dto';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +26,7 @@ export class AuthService {
     private tokenService: TokenService,
   ) {}
 
-  async login(createUserDto: CreateUserDto) {
+  async login(createUserDto: LoginUserDto) {
     const user = await this.validateUser(createUserDto);
     return await this.setTokens({
       email: user.email,
@@ -234,10 +235,7 @@ export class AuthService {
     }
 
     throw new HttpException(
-      {
-        status: HttpStatus.BAD_REQUEST, // Пользовательский код ошибки
-        error: 'Некорректный email или пароль',
-      },
+      'Некорректный email или пароль',
       HttpStatus.BAD_REQUEST,
     );
   }

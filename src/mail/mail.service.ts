@@ -9,7 +9,7 @@ export class MailService {
     await this.mailerService.sendMail({
       to: emailTo, // список получателей
       from: process.env.SMTP_USERNAME, // отправитель
-      subject: 'Активация аккаунта ✔' + process.env.API_URL, // Тема письма
+      subject: 'Активация аккаунта на' + process.env.API_URL, // Тема письма
       text: '', // Текстовое тело письма (можно оставить пустым)
       html: `
         <!DOCTYPE html>

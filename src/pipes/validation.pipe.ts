@@ -19,7 +19,7 @@ export class ValidationPipe implements PipeTransform<any> {
     if (errors.length) {
       const errorMessages = this.formatErrors(errors);
       throw new BadRequestException({
-        message: 'Validation failed',
+        message: 'Ошибка валидации',
         errors: errorMessages,
       });
     }
