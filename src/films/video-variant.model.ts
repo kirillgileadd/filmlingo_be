@@ -7,7 +7,7 @@ import {
 } from 'sequelize-typescript';
 import { Film } from './films.model';
 
-@Table
+@Table({ tableName: 'video_variants' })
 export class VideoVariant extends Model<VideoVariant> {
   @ForeignKey(() => Film)
   @Column

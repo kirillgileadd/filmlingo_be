@@ -2,7 +2,7 @@ import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
 import { VideoVariant } from './video-variant.model';
 import { Subtitle } from 'src/subtitle/subtitle.model';
 
-@Table
+@Table({ tableName: 'films' })
 export class Film extends Model<Film> {
   @Column({
     type: DataType.STRING,
