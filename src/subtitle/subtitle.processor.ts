@@ -6,6 +6,10 @@ import { SubtitlePhrases } from './subtitle-phrases.model';
 import { Subtitle } from './subtitle.model';
 import { Transaction } from 'sequelize';
 import axios from 'axios';
+import { logGPT } from '../uitils/gptLogger';
+import { SubtitleChunkDto } from './dto/subtitle-chunk.dto';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 
 export interface SubtitleEntry {
   id: string;
@@ -21,6 +25,7 @@ export interface SubtitleEntry {
 export class SubtitleProcessor {
   constructor(
     @InjectModel(Phrase) private phraseModel: typeof Phrase,
+    @InjectModel(Subtitle) private subtitleModel: typeof Subtitle,
     @InjectModel(SubtitlePhrases)
     private subtitlePhrasesModel: typeof SubtitlePhrases,
   ) {}
@@ -29,7 +34,7 @@ export class SubtitleProcessor {
     subtitles: Subtitle[],
     transaction?: Transaction,
   ): Promise<void> {
-    const chunkSize = 120;
+    const chunkSize = 60;
     const chunks = this.chunkSubtitles(subtitles, chunkSize);
 
     for (const chunk of chunks) {
@@ -49,64 +54,90 @@ export class SubtitleProcessor {
   private async analyzeChunk(chunk: Subtitle[]): Promise<any[]> {
     const prompt = this.buildPrompt(chunk);
 
-    try {
-      const response = await axios.post(
-        'https://api.proxyapi.ru/openai/v1/chat/completions',
-        {
-          model: 'gpt-4.1-nano-2025-04-14',
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.3,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.PROXY_API_KEY}`,
+    const fallBack: SubtitleChunkDto[] = chunk.map((s) => ({
+      text: s.text,
+      translate: null,
+      phrasal_verbs: [],
+      idioms: [],
+      ai_translate_comment: null,
+      ai_translate: null,
+    }));
+
+    const maxRetries = 3;
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
+      attempt++;
+
+      try {
+        const response = await axios.post(
+          'https://api.proxyapi.ru/openai/v1/chat/completions',
+          {
+            model: 'gpt-4o-mini-2024-07-18',
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            temperature: 0.3,
           },
-        },
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.PROXY_API_KEY}`,
+            },
+          },
+        );
+        if (process.env.NODE_ENV === 'development') {
+          logGPT({ prompt, response: response.data });
+        }
+        const content = response.data.choices?.[0]?.message?.content;
 
-      const content = response.data.choices?.[0]?.message?.content;
-      // const content = JSON.stringify([
-      //   {
-      //     text: 'She told me I had a purpose.',
-      //     phrasal_verbs: [
-      //       { phrase: 'pick up', translate: 'подобрать, забрать' },
-      //     ],
-      //     idioms: [{ phrase: 'hit the sack', translate: 'завалиться спать' }],
-      //   },
-      // ]);
-
-      return JSON.parse(content || '[]');
-    } catch (err) {
-      console.error('ProxyAPI GPT request failed:', err);
-      return [];
+        const rawData = JSON.parse(content || '[]');
+        if (rawData) {
+          const validated = await this.validateSubtitleChunks(rawData);
+          return validated;
+        }
+        return rawData;
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          logGPT({ prompt, error });
+        }
+        console.error('ProxyAPI GPT request failed:', error);
+      }
     }
+    return fallBack;
   }
 
   private async saveResults(
     originalChunk: Subtitle[],
-    gptResults: any[],
+    gptResults: SubtitleChunkDto[],
     transaction?: Transaction,
   ): Promise<void> {
-    const resultMap = new Map<
-      string,
-      { phrasal_verbs: any[]; idioms: any[] }
-    >();
+    const resultMap = new Map<string, SubtitleChunkDto>();
 
     for (const entry of gptResults) {
-      resultMap.set(entry.text, {
+      resultMap.set(entry.text.trim(), {
         phrasal_verbs: entry.phrasal_verbs || [],
         idioms: entry.idioms || [],
+        translate: entry.translate ?? null,
+        text: entry.text,
+        ai_translate_comment: entry.ai_translate_comment ?? null,
+        ai_translate: entry.ai_translate ?? null,
       });
     }
 
     for (const sub of originalChunk) {
-      const result = resultMap.get(sub.text);
+      const result = resultMap.get(sub.text.trim());
       if (!result) continue;
+
+      await this.subtitleModel.update(
+        {
+          ai_translate: result.ai_translate,
+          ai_translate_comment: result.ai_translate_comment,
+        },
+        { where: { id: Number(sub.id) }, transaction },
+      );
 
       const allPhrases = [
         ...result.phrasal_verbs.map((p) => ({
@@ -122,19 +153,13 @@ export class SubtitleProcessor {
       ];
 
       for (const phraseData of allPhrases) {
-        let phrase = await this.phraseModel.findOne({
-          where: { original: phraseData.original },
-        });
-
-        if (!phrase) {
-          phrase = await this.phraseModel.create(
-            phraseData as {
-              original: string;
-              translation: string;
-              type: 'idiom' | 'phrasal_verb';
-            },
-          );
-        }
+        const phrase = await this.phraseModel.create(
+          phraseData as {
+            original: string;
+            translation: string;
+            type: 'idiom' | 'phrasal_verb';
+          },
+        );
 
         await this.subtitlePhrasesModel.findOrCreate({
           where: { subtitleId: Number(sub.id), phraseId: phrase.id },
@@ -144,35 +169,49 @@ export class SubtitleProcessor {
     }
   }
 
-  private buildPrompt(chunk: Subtitle[]): string {
-    const subtitleTexts = chunk.map((s) => ({ text: s.text }));
-    const subtitleJSON = JSON.stringify(subtitleTexts, null, 2);
+  buildPrompt(chunk: Subtitle[]): string {
+    const subtitleTexts = chunk.map((s) => ({
+      text: s.text,
+      translate: s.translate,
+    }));
 
-    return `Ты — опытный лингвист и переводчик с английского на русский. Твоя задача — анализировать массив субтитров фильма и находить фразовые глаголы и идиомы с учётом контекста.
+    return `Ты — опытный лингвист и переводчик с английского на русский. Твоя задача — анализировать массив субтитров фильма и возвращать **СТРОГО ВАЛИДНЫЙ JSON** с переводом, выражениями и пояснениями.
+  В ответе возвращай просто JSON без комментариев и других вольностей чтобы я могу выполнить JSON.parse(Твой ответ) без ошибок 
+  
+  Для каждого субтитра:
 
-Для каждой строки субтитров:
-1. Проанализируй фразу в контексте — учитывай, что выражения могут быть не в канонической форме (например: "picked it up" вместо "pick up").
-2. Найди фразовые глаголы — даже если они разбиты словами (например: "pick it up").
-3. Найди идиомы и устойчивые выражения — включая разговорные, сленговые, редуцированные формы.
-4. Учитывай многозначность и выбери наиболее подходящий перевод в данном контексте.
-5. Если выражение можно понять только в сочетании с предыдущими строками — включи это в анализ.
-6. Возвращай строго валидный JSON-массив следующего формата:
-[
-  {
-    "text": "оригинальный текст субтитра",
-    "phrasal_verbs": [
-      { "phrase": "выражение", "translate": "перевод" }
-    ],
-    "idioms": [
-      { "phrase": "идиома", "translate": "перевод" }
-    ]
-  }
-]
-Если ничего не найдено — верни пустые массивы "phrasal_verbs": [], "idioms": [].
+  - Переведи субтитр художественно с учётом контекста (включая предыдущие строки).
+- Ты также получаешь человеческий художественный перевод в поле translate — **если он есть**, можешь на него ориентироваться, адаптировать или улучшать, но обязательно сделай собственную версию в поле ai_translate.
+- Найди фразовые глаголы и идиомы (в том числе разговорные, видоизменённые или разорванные).
+- Сохрани точную форму выражения, как в оригинале — **НЕ** переводя в инфинитив.
+- Если перевод субтитра содержит культурный контекст, сленг, который поймет только носитель английского языка, объясни его и положи объяснение в поле ai_translate_comment (1–2 предложения).
+- Если пояснение не требуется, установи ai_translate_comment в null.
 
-Примеры выражений, которые нужно находить:
+🔴 Важно:
+  - **СТРОГО соблюдай структуру JSON.**
+- В массивах phrasal_verbs и idioms каждый элемент должен быть объектом с двумя ключами: "phrase" и "translate".
+  ❌ Нельзя возвращать массив строк типа ["see value"] — это **невалидный формат**.
 
-**Фразовые глаголы:**
+✅ Выходной JSON должен быть массивом объектов следующего вида:
+
+  [
+    {
+      "text": "оригинальный субтитр",
+      "translate": "перевод из субтитров или null, если нет",
+      "ai_translate": "твой художественный перевод",
+      "phrasal_verbs": [
+        { "phrase": "фразовый глагол", "translate": "перевод" }
+      ],
+      "idioms": [
+        { "phrase": "идиома", "translate": "перевод" }
+      ],
+      "ai_translate_comment": "объяснение сложного места или null"
+    }
+  ]
+
+📘 Примеры выражений, которые нужно искать:
+
+  **Фразовые глаголы:**
 - "pick up" → "подобрать, забрать"
 - "run into" → "неожиданно встретить"
 - "get over it" → "пережить, справиться с чем-то"
@@ -181,11 +220,6 @@ export class SubtitleProcessor {
 - "hold on" → "подожди"
 - "carry on" → "продолжать"
 - "look it up" → "поискать (в словаре, интернете)"
-- "figure out" → "понять, разобраться"
-- "take off" → "взлетать, снимать (одежду)"
-- "turn down" → "отказаться"
-- "bring up" → "упомянуть, поднять тему"
-- "put off" → "откладывать"
 
 **Идиомы и устойчивые выражения:**
 - "a piece of cake" → "очень легко"
@@ -193,21 +227,20 @@ export class SubtitleProcessor {
 - "break a leg" → "ни пуха ни пера"
 - "under the weather" → "чувствовать себя плохо"
 - "spill the beans" → "выдать секрет"
-- "cost an arm and a leg" → "очень дорого"
-- "cut corners" → "халтурить"
-- "let the cat out of the bag" → "проболтаться"
-- "once in a blue moon" → "раз в сто лет, очень редко"
-- "the ball is in your court" → "теперь всё зависит от тебя"
-- "bite the bullet" → "собраться с духом и сделать неприятное"
-- "hit the nail on the head" → "точно подметить"
-- "go the extra mile" → "сделать сверх ожиданий"
-- "burn the midnight oil" → "работать допоздна"
-- "pull someone's leg" → "подшучивать"
+
+
+📙 Пример сложного субтитра и пояснения:
+
+  **Оригинал:**
+And certainly not when you got Liberia's deficit in your sky rocket.
+
+**Разбор:**
+
+"ai_translate_comment": "Фраза построена на кокни-слэнге: 'sky rocket' означает 'карман'. 'Liberia's deficit' — гиперболическое выражение."
 
 Вот субтитры:
-[
-${subtitleJSON}
-]`;
+${JSON.stringify(subtitleTexts)}
+`;
   }
 
   /**
@@ -221,4 +254,37 @@ ${subtitleJSON}
     const content = buffer.toString('utf-8');
     return parser.fromSrt(content) as SubtitleEntry[];
   }
+
+  async validateSubtitleChunks(data: any[]) {
+    const validatedChunks: SubtitleChunkDto[] = [];
+
+    for (const rawItem of data) {
+      const instance = plainToInstance(SubtitleChunkDto, rawItem, {
+        exposeDefaultValues: true,
+        enableImplicitConversion: true,
+      });
+      const errors = await validate(instance);
+      if (errors.length === 0) {
+        validatedChunks.push(instance);
+      } else {
+        console.log(
+          'Validation failed, using fallback:',
+          JSON.stringify(errors),
+        );
+        const stub = this.fallbackStub(rawItem?.text || 'UNKNOWN');
+        validatedChunks.push(plainToInstance(SubtitleChunkDto, stub));
+      }
+    }
+
+    return validatedChunks;
+  }
+
+  fallbackStub = (text: string) => ({
+    text,
+    translate: null,
+    phrasal_verbs: [],
+    idioms: [],
+    ai_translate_comment: null,
+    ai_translate: null,
+  });
 }

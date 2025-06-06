@@ -33,59 +33,6 @@ export class FilmController {
   @FormDataRequest({ storage: FileSystemStoredFile })
   @ApiOperation({ summary: 'Создать новую запись фильма с видео и постером' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'Загрузите видео, постер, субтитры и другие данные фильма',
-    required: true,
-    schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: 'Название фильма' },
-        description: { type: 'string', description: 'Описание фильма' },
-        imdb_rating: { type: 'number', description: 'IMDB рейтинг' },
-        kinopoisk_rating: { type: 'number', description: 'Кинопоиск рейтинг' },
-        year: { type: 'number', description: 'Год' },
-        category: { type: 'string', description: 'Категория' },
-        video: {
-          type: 'string',
-          format: 'binary',
-          description: 'Файл видео для фильма',
-        },
-        poster: {
-          type: 'string',
-          format: 'binary',
-          description: 'Изображение постера для фильма',
-        },
-        big_poster: {
-          type: 'string',
-          format: 'binary',
-          description: 'Изображение большого постера для фильма',
-        },
-        title_image: {
-          type: 'string',
-          format: 'binary',
-          description: 'Изображение названия для фильма',
-        },
-        subtitles: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              file: {
-                type: 'string',
-                format: 'binary',
-                description: 'Файл субтитров',
-              },
-              lang: {
-                type: 'string',
-                description: 'Язык субтитров (например, en, ru)',
-              },
-            },
-          },
-          description: 'Массив субтитров с языковыми метками',
-        },
-      },
-    },
-  })
   async createFilm(@Body() createFilmDto: CreateFilmDto) {
     console.log(createFilmDto, 'createFilmDto');
     createFilmDto.kinopoisk_rating = Number(createFilmDto.kinopoisk_rating);

@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsDefined,
   IsIn,
   IsNotEmpty,
   IsString,
@@ -52,7 +53,7 @@ export class CreateFilmDto {
 
   @ApiProperty({ type: [CreateFilmVideosDto] })
   @IsArray()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => CreateFilmVideosDto)
   videos: CreateFilmVideosDto[];
 
@@ -74,9 +75,15 @@ export class CreateFilmDto {
   @ApiProperty({ type: 'string', format: 'binary', required: false })
   title_image?: FileSystemStoredFile;
 
-  @ApiProperty({ type: [CreateSubtitleDto] })
-  @IsArray()
-  @ValidateNested({ each: true })
+  @ApiProperty({ type: CreateSubtitleDto })
+  @ValidateNested()
+  @IsDefined({ message: 'subtitles_ru is required' })
   @Type(() => CreateSubtitleDto)
-  subtitles: CreateSubtitleDto[];
+  subtitles_ru: CreateSubtitleDto;
+
+  @ApiProperty({ type: CreateSubtitleDto })
+  @ValidateNested()
+  @IsDefined({ message: 'subtitles_en is required' })
+  @Type(() => CreateSubtitleDto)
+  subtitles_en: CreateSubtitleDto;
 }

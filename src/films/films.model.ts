@@ -69,5 +69,5 @@ export class Film extends Model<Film> {
   uploadedAt: Date;
 
   @HasMany(() => Subtitle)
-  subtitles: Subtitle[]; // Связь с субтитрами
+  subtitles: Subtitle[];
 }

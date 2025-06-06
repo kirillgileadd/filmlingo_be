@@ -88,9 +88,9 @@ export class WordsService {
     return word;
   }
 
-  async removeWord(userId: number, wordId: number) {
+  async removeWord(userId: number, userWordsId: number) {
     const userWord = await this.userWordModel.findOne({
-      where: { userId, wordId },
+      where: { id: userWordsId, userId },
     });
 
     if (!userWord) {

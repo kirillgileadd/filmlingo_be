@@ -11,6 +11,7 @@ import * as path from 'path';
 import fs, { copyFileSync, createReadStream } from 'fs';
 import { CreateFilmVideosDto } from '../films/dto/create-film.dto';
 import { FileSystemStoredFile } from 'nestjs-form-data';
+import * as uuid from 'uuid';
 
 @Injectable()
 export class FileService {
@@ -66,11 +67,8 @@ export class FileService {
     const results: { variant: string; path: string }[] = [];
 
     for (const { file, variant } of videos) {
-      const sanitizedFilename = normalizeFilename(file.originalName);
-      const videoDir = path.join(
-        rootTempDir,
-        `${sanitizedFilename}_${variant}`,
-      );
+      const sanitizedFilename = `film__${uuid.v4()}_${variant}`;
+      const videoDir = path.join(rootTempDir, sanitizedFilename);
       fs.mkdirSync(videoDir, { recursive: true });
 
       const inputPath = path.join(videoDir, `${sanitizedFilename}.mp4`);
@@ -118,9 +116,9 @@ export class FileService {
         variant,
         path: `/hls/${sanitizedFilename}/${variant}/index.m3u8`,
       });
-
-      fs.rmSync(rootTempDir, { recursive: true, force: true });
     }
+
+    fs.rmSync(rootTempDir, { recursive: true, force: true });
 
     return results;
   }

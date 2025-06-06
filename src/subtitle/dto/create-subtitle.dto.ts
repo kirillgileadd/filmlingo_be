@@ -2,10 +2,10 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 
 export class CreateSubtitleDto {
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'subtitle file is empty' })
   file: FileSystemStoredFile;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'subtitle language is empty' })
   language: string;
 }

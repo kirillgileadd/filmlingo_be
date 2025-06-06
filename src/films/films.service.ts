@@ -12,7 +12,6 @@ import { Film } from './films.model';
 import { VideoVariant } from './video-variant.model';
 import { SubtitleService } from 'src/subtitle/subtitle.service';
 import { Sequelize } from 'sequelize';
-import { createReadStream } from 'fs';
 
 @Injectable()
 export class FilmService {
@@ -23,7 +22,7 @@ export class FilmService {
     private readonly subtitleModel: typeof Subtitle,
     @InjectModel(VideoVariant)
     private readonly videoVariantModel: typeof VideoVariant,
-    private readonly subtitleServie: SubtitleService,
+    private readonly subtitleService: SubtitleService,
     private readonly fileService: FileService,
     @Inject('Sequelize') private readonly sequelize: Sequelize,
   ) {}
@@ -73,15 +72,11 @@ export class FilmService {
       await this.videoVariantModel.bulkCreate(videoVariants, { transaction }); // Сохраняем все варианты сразу
 
       try {
-        await Promise.all(
-          createFilmDto.subtitles.map(async (dto) => {
-            await this.subtitleServie.saveSubtitles(
-              dto.file.path,
-              dto.language,
-              film.id,
-              transaction,
-            );
-          }),
+        await this.subtitleService.saveSubtitles(
+          createFilmDto.subtitles_en.file.path,
+          createFilmDto.subtitles_ru.file.path,
+          film.id,
+          transaction,
         );
       } catch (error) {
         console.error('Error in createFilm:', error);

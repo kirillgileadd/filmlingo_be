@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Subtitle } from './subtitle.model';
 import { CreateSubtitleDto } from './dto/create-subtitle.dto';
 import { Transaction } from 'sequelize';
@@ -70,48 +74,60 @@ export class SubtitleService {
     await this.subtitleModel.destroy({ where: { id: subtitleId } });
   }
 
-  /**
-   * Сохраняет субтитры в базу данных.
-   * @param buffer - Буфер файла субтитров
-   * @param language - Буфер файла субтитров
-   * @param filmId - Идентификатор видео
-   * @param transaction - (Необязательно) Транзакция Sequelize
-   */
   async saveSubtitles(
-    filePath: string,
-    language: string,
+    enSubtitleFilePath: string,
+    ruSubtitleFilePath: string,
     filmId: number,
     transaction?: Transaction,
   ): Promise<void> {
     try {
-      const buffer = fs.readFileSync(filePath);
-      const subtitles = await this.subtitleProcessor.parse(buffer);
+      const bufferEn = fs.readFileSync(enSubtitleFilePath);
+      const bufferRU = fs.readFileSync(ruSubtitleFilePath);
+      const enSubtitles = await this.subtitleProcessor.parse(bufferEn);
+      const ruSubtitles = await this.subtitleProcessor.parse(bufferRU);
 
-      const subtitleInstances = subtitles.map((sub) => ({
+      const ruMap = new Map(ruSubtitles.map((r) => [r.startTime, r.text]));
+      const enMap = new Map(enSubtitles.map((e) => [e.startTime, e.text]));
+
+      const enSubtitleInstances = enSubtitles.map((entry) => ({
         filmId,
-        startTime: sub.startTime,
-        endTime: sub.endTime,
-        language: language,
-        startSeconds: sub.startSeconds,
-        endSeconds: sub.endSeconds,
-        text: sub.text,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        language: 'en',
+        startSeconds: entry.startSeconds,
+        endSeconds: entry.endSeconds,
+        text: entry.text,
+        translate: ruMap.get(entry.startTime) || null,
       }));
 
-      const _subtitles = await this.subtitleModel.bulkCreate(
-        subtitleInstances,
-        {
-          transaction,
-        },
-      );
+      const ruSubtitleInstances = ruSubtitles.map((entry) => ({
+        filmId,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        language: 'ru',
+        startSeconds: entry.startSeconds,
+        endSeconds: entry.endSeconds,
+        text: entry.text,
+        translate: enMap.get(entry.startTime) || null,
+      }));
 
-      //TODO
-      if (language === 'en') {
-        await this.subtitleProcessor.extractPhrasesFromSubtitles(
-          _subtitles,
-          transaction,
-        );
-      }
+      const enSubs = await this.subtitleModel.bulkCreate(enSubtitleInstances, {
+        transaction,
+      });
+
+      await this.subtitleModel.bulkCreate(ruSubtitleInstances, {
+        transaction,
+      });
+
+      await this.subtitleProcessor.extractPhrasesFromSubtitles(
+        enSubs,
+        transaction,
+      );
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        console.error('Error saving subtitles:', error);
+        throw error;
+      }
       console.error('Error saving subtitles:', error);
       throw new InternalServerErrorException('Failed to save subtitles');
     }

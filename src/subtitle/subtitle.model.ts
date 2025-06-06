@@ -34,6 +34,15 @@ export class Subtitle extends Model<Subtitle> {
   @Column({ type: DataType.TEXT, allowNull: false })
   text: string;
 
+  @Column({ type: DataType.STRING, allowNull: true })
+  translate: string | null;
+
+  @Column({ type: DataType.STRING, allowNull: true })
+  ai_translate: string | null;
+
+  @Column({ type: DataType.STRING, allowNull: true })
+  ai_translate_comment: string | null;
+
   @BelongsToMany(() => Phrase, () => SubtitlePhrases)
   phrases: Phrase[];
 }

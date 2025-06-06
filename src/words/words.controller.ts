@@ -130,8 +130,8 @@ export class WordsController {
   @Roles('USER')
   @UseGuards(RolesGuard)
   @Delete(':id/remove')
-  async removeWord(@Req() req, @Param('id') wordId: number) {
+  async removeWord(@Req() req, @Param('id') userWordId: number) {
     const userId = req.user.id;
-    return this.wordsService.removeWord(userId, wordId);
+    return this.wordsService.removeWord(userId, userWordId);
   }
 }

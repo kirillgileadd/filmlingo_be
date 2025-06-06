@@ -134,7 +134,7 @@ export class AuthController {
       maxAge: 60 * 60 * 1000,
     });
 
-    return res.redirect(process.env.APP_URL);
+    return res.redirect(process.env.APP_URL + '/success-auth');
   }
 
   @Get('yandex')
@@ -162,7 +162,7 @@ export class AuthController {
       maxAge: 60 * 60 * 1000,
     });
 
-    return res.redirect(process.env.APP_URL);
+    return res.redirect(process.env.APP_URL + '/success-auth');
   }
 
   @Get('google')
@@ -190,6 +190,6 @@ export class AuthController {
       maxAge: 60 * 60 * 1000,
     });
 
-    return res.redirect(process.env.APP_URL);
+    return res.redirect(process.env.APP_URL + '/success-auth');
   }
 }
