@@ -73,7 +73,7 @@ export class FilmController {
   @ApiParam({ name: 'id', required: true, description: 'ID фильма' })
   @ApiResponse({ status: 204, description: 'Фильм успешно удален.' })
   @ApiResponse({ status: 404, description: 'Фильм не найден.' })
-  async deleteFilm(@Param('id') id: string): Promise<void> {
+  async deleteFilm(@Param('id') id: string): Promise<{ message: string }> {
     const _id = parseInt(id, 10);
 
     return this.filmService.deleteFilm(_id);

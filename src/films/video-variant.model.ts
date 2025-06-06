@@ -1,4 +1,10 @@
-import { Column, ForeignKey, Model, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { Film } from './films.model';
 
 @Table
@@ -12,4 +18,7 @@ export class VideoVariant extends Model<VideoVariant> {
 
   @Column
   videoPath: string;
+
+  @BelongsTo(() => Film, { onDelete: 'CASCADE', hooks: true })
+  film: Film;
 }

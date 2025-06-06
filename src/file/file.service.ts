@@ -97,6 +97,8 @@ export class FileService {
 
       const files = fs.readdirSync(videoDir);
       for (const file of files) {
+        if (file.endsWith('.mp4')) continue;
+
         const filePath = path.join(videoDir, file);
         const key = `hls/${sanitizedFilename}/${variant}/${file}`;
 
@@ -125,45 +127,48 @@ export class FileService {
 
   async deleteFileFromS3(key: string): Promise<void> {
     try {
+      const bucketName = process.env.S3_BUCKET_NAME!;
       await this.s3Client.send(
         new DeleteObjectCommand({
-          Bucket: this.bucketName,
-          Key: key,
+          Bucket: bucketName,
+          Key: key.startsWith('/') ? key.slice(1) : key,
         }),
       );
-      console.log(`File ${key} successfully deleted from S3.`);
+      console.log(`Deleted from S3: ${key}`);
     } catch (error) {
-      console.error(`Failed to delete file ${key} from S3:`, error);
-      throw new Error('Failed to delete file from S3.');
+      console.error(`Failed to delete ${key} from S3`, error);
+      throw error;
     }
   }
 
-  async getS3KeysFromM3U8(url: string): Promise<string[]> {
+  async getS3KeysFromM3U8(m3u8Url: string): Promise<string[]> {
     try {
-      // Скачиваем m3u8 файл
-      const response = await axios.get(url);
-      const m3u8Content = response.data;
+      const res = await axios.get(m3u8Url);
+      const text = res.data as string;
 
-      // Базовый путь для вычисления S3 ключей
-      const basePath = url.substring(0, url.lastIndexOf('/') + 1);
+      const basePath = m3u8Url.substring(0, m3u8Url.lastIndexOf('/') + 1);
 
-      // Разбиваем содержимое на строки и фильтруем сегменты
-      const s3Keys = m3u8Content
-        .split('\n')
-        .filter((line) => line && !line.startsWith('#')) // Игнорируем комментарии (#EXTINF, #EXT-X, и т.д.)
-        .map((segmentPath) => {
-          // Формируем полный путь сегмента
-          const fullPath = new URL(segmentPath, basePath).toString();
+      const bucketName = process.env.S3_BUCKET_NAME!;
+      const lines = text.split('\n');
+      const keys: string[] = [];
 
-          // Извлекаем ключ S3 из полного пути
-          const s3Key = fullPath.replace(`${basePath}`, '');
-          return s3Key;
-        });
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const url = new URL(basePath);
+          let baseS3Prefix = url.pathname; // "/hls/film__.../480p/"
+          if (baseS3Prefix.startsWith(`/${bucketName}/`)) {
+            baseS3Prefix = baseS3Prefix.replace(`/${bucketName}/`, '/');
+          }
+          const key = baseS3Prefix + trimmed;
+          keys.push(key);
+        }
+      }
 
-      return s3Keys;
+      return keys;
     } catch (error) {
-      console.error('Failed to get S3 keys from m3u8:', error);
-      throw new Error('Failed to parse m3u8 file.');
+      console.error('Failed to get keys from M3U8', error);
+      throw error;
     }
   }
 }

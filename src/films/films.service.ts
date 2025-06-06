@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Subtitle } from 'src/subtitle/subtitle.model';
@@ -130,28 +131,60 @@ export class FilmService {
     return filmPlain;
   }
 
-  async deleteFilm(id: number): Promise<void> {
+  async getFilmModeById(id: number): Promise<Film> {
+    const film = await this.filmModel.findByPk(id, {
+      include: [
+        this.videoVariantModel,
+        {
+          model: this.subtitleModel,
+          required: false,
+          attributes: ['language', 'filmId'],
+        },
+      ],
+    });
+
+    if (!film) return null;
+
+    return film;
+  }
+
+  async deleteFilm(id: number): Promise<{ message: string }> {
     if (!id || !Number.isInteger(id)) {
-      throw new BadRequestException('Not Found');
+      throw new BadRequestException('Неверный id фильма');
     }
 
-    const film = await this.getFilmById(id);
-    if (film) {
-      //TODO - del all s3 files
-      // await this.fileService.deleteFileFromS3(film.bigPosterPath);
-      // await this.fileService.deleteFileFromS3(film.posterPath);
-      // await this.fileService.deleteFileFromS3(film.titleImagePath);
-      film.videoVariants.map(async (videoVariant) => {
-        const indexPaths = await this.fileService.getS3KeysFromM3U8(
-          process.env.S3_PUBLIC_URL + videoVariant.videoPath,
-        );
-        console.log(indexPaths);
-        // indexPaths.map(
-        //   async (path) => await this.fileService.deleteFileFromS3(path),
-        // );
-        // await this.fileService.deleteFileFromS3(videoVariant.videoPath);
-        // await film.destroy();
-      });
+    const film = await this.getFilmModeById(id);
+
+    if (!film) {
+      throw new NotFoundException('Фильм не найден');
     }
+
+    await Promise.all([
+      film.posterPath
+        ? this.fileService.deleteFileFromS3(film.posterPath)
+        : null,
+      film.bigPosterPath
+        ? this.fileService.deleteFileFromS3(film.bigPosterPath)
+        : null,
+      film.titleImagePath
+        ? this.fileService.deleteFileFromS3(film.titleImagePath)
+        : null,
+    ]);
+
+    await Promise.all(
+      film.videoVariants.map(async (videoVariant) => {
+        const m3u8Url = `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}${videoVariant.videoPath}`;
+
+        const segmentKeys = await this.fileService.getS3KeysFromM3U8(m3u8Url);
+        await Promise.all([
+          ...segmentKeys.map((key) => this.fileService.deleteFileFromS3(key)),
+          this.fileService.deleteFileFromS3(videoVariant.videoPath),
+        ]);
+      }),
+    );
+
+    await film.destroy();
+
+    return { message: `Фильм ${id} успешно удален` };
   }
 }

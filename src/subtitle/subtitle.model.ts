@@ -1,4 +1,5 @@
 import {
+  BelongsTo,
   BelongsToMany,
   Column,
   DataType,
@@ -43,6 +44,15 @@ export class Subtitle extends Model<Subtitle> {
   @Column({ type: DataType.STRING, allowNull: true })
   ai_translate_comment: string | null;
 
-  @BelongsToMany(() => Phrase, () => SubtitlePhrases)
+  @BelongsTo(() => Film, { onDelete: 'CASCADE', hooks: true })
+  film: Film;
+
+  @BelongsToMany(() => Phrase, {
+    through: {
+      model: () => SubtitlePhrases,
+    },
+    onDelete: 'CASCADE',
+    hooks: true,
+  })
   phrases: Phrase[];
 }

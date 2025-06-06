@@ -20,7 +20,7 @@ export class Film extends Model<Film> {
     type: DataType.STRING,
     allowNull: false,
   })
-  posterPath: string; // Путь к обложке фильма на диске
+  posterPath: string;
 
   @Column({
     type: DataType.STRING,

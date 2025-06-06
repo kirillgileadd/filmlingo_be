@@ -27,6 +27,8 @@ import { Phrase } from './phrases/phrase.model';
 import { UserPhrases } from './phrases/user-phrases.model';
 import { SubtitlePhrases } from './subtitle/subtitle-phrases.model';
 import { Subtitle } from './subtitle/subtitle.model';
+import { Film } from './films/films.model';
+import { VideoVariant } from './films/video-variant.model';
 
 @Module({
   controllers: [],
@@ -50,6 +52,8 @@ import { Subtitle } from './subtitle/subtitle.model';
     }),
     SequelizeModule.forRoot({
       models: [
+        Film,
+        VideoVariant,
         Role,
         UserRoles,
         Token,

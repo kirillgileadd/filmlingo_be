@@ -11,16 +11,20 @@ import { Phrase } from '../phrases/phrase.model';
 @Table({ tableName: 'subtitle_phrases' })
 export class SubtitlePhrases extends Model<SubtitlePhrases> {
   @ForeignKey(() => Subtitle)
-  @Column
+  @Column({
+    onDelete: 'CASCADE',
+  })
   subtitleId: number;
 
   @ForeignKey(() => Phrase)
-  @Column
+  @Column({
+    onDelete: 'CASCADE',
+  })
   phraseId: number;
 
-  @BelongsTo(() => Subtitle)
+  @BelongsTo(() => Subtitle, { onDelete: 'CASCADE' })
   subtitle: Subtitle;
 
-  @BelongsTo(() => Phrase)
+  @BelongsTo(() => Phrase, { onDelete: 'CASCADE' })
   phrase: Phrase;
 }
