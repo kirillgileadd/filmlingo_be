@@ -13,7 +13,7 @@ async function start() {
 
   app.use(cookieParser());
   app.enableCors({
-    origin: [process.env.APP_URL, 'http://localhost:3001'],
+    origin: process.env.CORS_ORIGINS.split(','),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,

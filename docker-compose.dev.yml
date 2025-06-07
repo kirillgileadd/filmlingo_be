@@ -39,6 +39,16 @@ services:
       - "1025:1025" # SMTP порт
       - "8025:8025" # Веб-интерфейс для просмотра писем
 
+#  telegram-bot:
+#    build: ../filmlingo-bot
+#    container_name: filmlingo-telegram-bot
+#    restart: always
+#    env_file:
+#      - ../filmlingo-bot/.env
+#    depends_on:
+#      - postgres
+#      - minio
+
 #  backend:
 #    build: ./
 #    restart: always

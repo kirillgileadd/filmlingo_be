@@ -3,3 +3,5 @@
 /.idea
 .development.env
 .production.env
+/config
+/logs
