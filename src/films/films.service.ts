@@ -125,6 +125,12 @@ export class FilmService {
       }
     }
 
+    uniqueLanguageSubtitles.sort((a, b) => {
+      if (a.language === 'en') return -1;
+      if (b.language === 'en') return 1;
+      return 0;
+    });
+
     const filmPlain = film.get({ plain: true });
     filmPlain.subtitles = uniqueLanguageSubtitles;
 

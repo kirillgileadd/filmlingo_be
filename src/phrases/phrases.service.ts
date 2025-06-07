@@ -83,6 +83,12 @@ export class PhrasesService {
         sourceContext,
       });
     } else if (sourceContext) {
+      if (sourceContext === userPhrase.sourceContext) {
+        throw new BadRequestException(
+          'Фраза уже была добавлена в этом контексте',
+        );
+      }
+
       userPhrase.sourceContext = sourceContext;
       await userPhrase.save();
     }

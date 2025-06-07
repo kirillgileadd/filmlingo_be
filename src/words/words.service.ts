@@ -81,6 +81,12 @@ export class WordsService {
         sourceContext,
       });
     } else if (sourceContext) {
+      if (sourceContext === userWord.sourceContext) {
+        throw new BadRequestException(
+          'Слово уже было добавлено в этом контексте',
+        );
+      }
+
       userWord.sourceContext = sourceContext;
       await userWord.save();
     }
