@@ -8,7 +8,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBody,
   ApiConsumes,
   ApiOperation,
   ApiParam,

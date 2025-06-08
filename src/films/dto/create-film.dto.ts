@@ -59,19 +59,19 @@ export class CreateFilmDto {
 
   @IsFile()
   @MaxFileSize(5e6) // Ограничение на размер файла, например 1MB для poster
-  @HasMimeType(['image/jpeg', 'image/png']) // MIME-типы для изображений
+  @HasMimeType(['image/jpeg', 'image/png', 'image/webp']) // MIME-типы для изображений
   @ApiProperty({ type: 'string', format: 'binary', required: false })
   poster?: FileSystemStoredFile;
 
   @IsFile()
   @MaxFileSize(10e6) // Ограничение для больших постеров
-  @HasMimeType(['image/jpeg', 'image/png'])
+  @HasMimeType(['image/jpeg', 'image/png', 'image/webp'])
   @ApiProperty({ type: 'string', format: 'binary', required: false })
   big_poster?: FileSystemStoredFile;
 
   @IsFile()
   @MaxFileSize(5e6) // Ограничение для изображения титульного изображения
-  @HasMimeType(['image/jpeg', 'image/png'])
+  @HasMimeType(['image/jpeg', 'image/png', 'image/webp'])
   @ApiProperty({ type: 'string', format: 'binary', required: false })
   title_image?: FileSystemStoredFile;
 
