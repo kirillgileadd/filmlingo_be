@@ -120,4 +120,24 @@ describe('SubtitleProcessor', () => {
     expect(validated[0].translate).toBe(null);
     expect(validated[0].ai_translate_comment).toBe(null);
   });
+
+  it('extractJsonFromResponse', async () => {
+    const data =
+      '```json\n[\n    {\n        "text": "Can you live with that?",\n        "translate": "Смирись с этим.",\n        "ai_translate": "Ты сможешь с этим смириться?",\n        "phrasal_verbs": [],\n        "idioms": [],\n        "ai_translate_comment": null\n    }\n]\\n```';
+
+    const result = [
+      {
+        text: 'Can you live with that?',
+        translate: 'Смирись с этим.',
+        ai_translate: 'Ты сможешь с этим смириться?',
+        phrasal_verbs: [],
+        idioms: [],
+        ai_translate_comment: null,
+      },
+    ];
+
+    const parsedJSON = processor.extractJsonFromResponse(data);
+
+    expect(parsedJSON).toEqual(result);
+  });
 });

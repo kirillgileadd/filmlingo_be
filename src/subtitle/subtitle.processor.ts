@@ -93,7 +93,7 @@ export class SubtitleProcessor {
         }
         const content = response.data.choices?.[0]?.message?.content;
 
-        const rawData = JSON.parse(content || '[]');
+        const rawData = this.extractJsonFromResponse(content || '[]');
         if (rawData) {
           const validated = await this.validateSubtitleChunks(rawData);
           return validated;
@@ -170,12 +170,14 @@ export class SubtitleProcessor {
   }
 
   buildPrompt(chunk: Subtitle[]): string {
+    const chunkDate = Date.now();
+
     const subtitleTexts = chunk.map((s) => ({
       text: s.text,
       translate: s.translate,
     }));
 
-    return `Ты — опытный лингвист и переводчик с английского на русский. Твоя задача — анализировать массив субтитров фильма и возвращать **СТРОГО ВАЛИДНЫЙ JSON** с переводом, выражениями и пояснениями.
+    return `Дата загрузки чанка ${chunkDate} Ты — опытный лингвист и переводчик с английского на русский. Твоя задача — анализировать массив субтитров фильма и возвращать **СТРОГО ВАЛИДНЫЙ JSON** с переводом, выражениями и пояснениями.
   В ответе возвращай просто JSON без комментариев и других вольностей чтобы я могу выполнить JSON.parse(Твой ответ) без ошибок 
   
   Для каждого субтитра:
@@ -277,6 +279,20 @@ ${JSON.stringify(subtitleTexts)}
     }
 
     return validatedChunks;
+  }
+
+  extractJsonFromResponse(text: string) {
+    const start = text.indexOf('[');
+    const end = text.lastIndexOf(']');
+    if (start !== -1 && end !== -1 && end > start) {
+      const json = text.slice(start, end + 1);
+      try {
+        return JSON.parse(json);
+      } catch (err) {
+        console.error('JSON parse error:', err);
+      }
+    }
+    throw new Error('Response did not contain valid JSON array');
   }
 
   fallbackStub = (text: string) => ({
