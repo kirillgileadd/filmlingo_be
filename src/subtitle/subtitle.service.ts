@@ -7,7 +7,7 @@ import { Subtitle } from './subtitle.model';
 import { CreateSubtitleDto } from './dto/create-subtitle.dto';
 import { Transaction } from 'sequelize';
 import { InjectModel } from '@nestjs/sequelize';
-import { SubtitleProcessor } from './subtitle.processor';
+import { SubtitleEntry, SubtitleProcessor } from './subtitle.processor';
 import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
 import { Phrase } from '../phrases/phrase.model';
 import fs from 'fs';
@@ -70,6 +70,38 @@ export class SubtitleService {
     };
   }
 
+  alignSubtitles(
+    engSubs: SubtitleEntry[],
+    rusSubs: SubtitleEntry[],
+    threshold = 1000,
+  ): SubtitleEntry[] {
+    const alignedRus: SubtitleEntry[] = [...rusSubs];
+
+    for (let i = 0; i < engSubs.length; i++) {
+      const eng = engSubs[i];
+      let closestIdx = -1;
+      let minDiff = threshold + 1;
+
+      for (let j = 0; j < rusSubs.length; j++) {
+        const rus = rusSubs[j];
+        const diff = Math.abs(rus.startSeconds - eng.startSeconds);
+        if (diff < threshold && diff < minDiff) {
+          closestIdx = j;
+          minDiff = diff;
+        }
+      }
+
+      if (closestIdx !== -1) {
+        alignedRus[closestIdx].startSeconds = eng.startSeconds;
+        alignedRus[closestIdx].startTime = eng.startTime;
+        alignedRus[closestIdx].endTime = eng.endTime;
+        alignedRus[closestIdx].endSeconds = eng.endSeconds;
+      }
+    }
+
+    return alignedRus;
+  }
+
   async deleteSubtitle(subtitleId: number): Promise<void> {
     await this.subtitleModel.destroy({ where: { id: subtitleId } });
   }
@@ -86,7 +118,9 @@ export class SubtitleService {
       const enSubtitles = await this.subtitleProcessor.parse(bufferEn);
       const ruSubtitles = await this.subtitleProcessor.parse(bufferRU);
 
-      const ruMap = new Map(ruSubtitles.map((r) => [r.startTime, r.text]));
+      const alignRuSubtitles = this.alignSubtitles(enSubtitles, ruSubtitles);
+
+      const ruMap = new Map(alignRuSubtitles.map((r) => [r.startTime, r.text]));
       const enMap = new Map(enSubtitles.map((e) => [e.startTime, e.text]));
 
       const enSubtitleInstances = enSubtitles.map((entry) => ({
@@ -100,7 +134,7 @@ export class SubtitleService {
         translate: ruMap.get(entry.startTime) || null,
       }));
 
-      const ruSubtitleInstances = ruSubtitles.map((entry) => ({
+      const ruSubtitleInstances = alignRuSubtitles.map((entry) => ({
         filmId,
         startTime: entry.startTime,
         endTime: entry.endTime,
