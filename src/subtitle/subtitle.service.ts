@@ -134,7 +134,7 @@ export class SubtitleService {
         translate: ruMap.get(entry.startTime) || null,
       }));
 
-      const ruSubtitleInstances = alignRuSubtitles.map((entry) => ({
+      const ruSubtitleInstances = ruSubtitles.map((entry) => ({
         filmId,
         startTime: entry.startTime,
         endTime: entry.endTime,
